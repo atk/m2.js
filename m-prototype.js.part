@@ -1,0 +1,4 @@
+,
+	// this makes most development consoles interpret the output as Array
+	splice: a.splice
+}
