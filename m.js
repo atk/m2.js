@@ -142,7 +142,7 @@ m.s = {
 	checked: function () { return function () { return this.checked } },
 	not: function (_, a, b, n) { return n = m(n), function (l) { for (l = 0; n[l];) if (n[l++] == this) return !1; return !0 } },
 	root: function() { return function(n){ return n == d.documentElement } },
-	has: function(_, a, b, q) { return function(n){ return t(n).find(q).length > 0 } },
+	has: function(_, a, b, q) { return function(n){ return m(n).find(q).length > 0 } },
 	contains: function (a, t, r, c) {
 		t = function(n, r){ return n ? (n.nodeType == 3 && r.push(n.data), t(n.firstChild, r), t(n.nextSibling, r)) : r }
 		return function(n) { return !!~t(n, r = []).join('').indexOf(c) }
