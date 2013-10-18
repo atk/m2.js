@@ -256,11 +256,12 @@ m('#build').on('click', build)
 		</ul>
 	</li>
 	<li id="iterator">
-		<h3>m.each(o, f), m(s).each(f) - Iterator</h3>
+		<h3>m.each(o, f), m(s).each(f), m(s).filter(f) - Iterator</h3>
 		<ul>
 			<li>m.each({key, value}, function(value, key){ /* this == value */ })</li>
 			<li>m.each([1, 2, 3], function(value, key){ /* this == value */ })</li>
 			<li>m(s).each(function(node, idx){ /* this == node */ })</li>
+			<li>m(s).filter(function(node, idx){ return true || NodeCollection })</li>
 		</ul>
 	</li>
 	<li id="networking">
