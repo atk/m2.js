@@ -1,0 +1,20 @@
+
+/* JSONp:
+	m.jsonp({
+		url: '[required: url string]',
+		callback: [optional: callback function],
+		"_": '[optional: callback name - do not use unless you know what you are doing]'
+	})
+*/
+m.jsonp = function (o, h, s) {
+	h = d[g]('head')[0],
+	s = d.createElement(j),
+	o.callback && (this[o._ = o._ || j + 0 | i++ * new Date()] = function(){
+		h.removeChild(s)
+		o.callback.apply(this, arguments)
+		delete this[[]._]
+	}),
+	s.src = o.url.replace(/\??$/, o._),
+	h.appendChild(s)
+	return s
+}
