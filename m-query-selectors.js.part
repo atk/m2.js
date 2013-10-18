@@ -1,4 +1,3 @@
-
 // Selector functions: each returns a function that will be used to filter the output (re-use where possible and reasonable)
 m.s = {
 	'[': function (k, c, v, i) {
@@ -14,9 +13,9 @@ m.s = {
 			for (t = this.parentNode[g](n || this.nodeName), c = l ? t.length - i + s : i - s; l ? (c -= s >= 0) : (c += s < t.length);) if (t[c] == this) return !0
 		}
 	},
-	'nth-last-of-type': function (n, s, i, c) { return t.s['nth-of-type'](c, s, i, n, 1) },
-	'nth-child': function (_, a, b, c) { return t.s['nth-of-type'](c,0,0,'*') },
-	'nth-last-child': function (_, a, b, c) { return t.s['nth-last-of-type'](c,0,0,'*') },
+	'nth-last-of-type': function (n, s, i, c) { return m.s['nth-of-type'](c, s, i, n, 1) },
+	'nth-child': function (_, a, b, c) { return m.s['nth-of-type'](c,0,0,'*') },
+	'nth-last-child': function (_, a, b, c) { return m.s['nth-last-of-type'](c,0,0,'*') },
 	'first-child': function () { return function(){ return this.parentNode[g]('*')[0] == this } },
 	'last-child': function () { return function(n){ return n=this.parentNode[g]('*'), n[n.length-1] == this } },
 	'first-of-type': function () { return function(){ return this.parentNode[g](this.nodeName)[0] == this } },
@@ -24,31 +23,31 @@ m.s = {
 	'only-child': function () { return function(){ return this.parentNode[g]('*').length == 1 } },
 	'only-of-type': function () { return function(){ return this.parentNode[g](this.nodeName).length == 1 } },
 	empty: function () { return function () { return !this.childNodes.length } },
-	target: function (t) { return this['[']('id', '=', /^#(.+)$/.test(location.search) ? RegExp.$1 : '#') },
-	lang: function () { return this['[']('lang', '|=', l, 'i') },
+	target: function (t) { return m.s['[']('id', '=', /^#(.+)$/.test(location.search) ? RegExp.$1 : '#') },
+	lang: function () { return m.s['[']('lang', '|=', l, 'i') },
 	enabled: function () { return function () { return !this.disabled } },
 	disabled: function () { return function () { return this.disabled } },
 	checked: function () { return function () { return this.checked } },
-	not: function (_, a, b, n) { return n = t(n), function (l) { for (l = 0; n[l];) if (n[l++] == this) return !1; return !0 } },
+	not: function (_, a, b, n) { return n = m(n), function (l) { for (l = 0; n[l];) if (n[l++] == this) return !1; return !0 } },
 	root: function() { return function(n){ return n == d.documentElement } },
-	has: function(_, a, b, q) { return function(n){ return t(n).find(q).length > 0 } },
+	has: function(_, a, b, q) { return function(n){ return m(n).find(q).length > 0 } },
 	contains: function (a, t, r, c) {
 		t = function(n, r){ return n ? (n.nodeType == 3 && r.push(n.data), t(n.firstChild, r), t(n.nextSibling, r)) : r }
 		return function(n) { return !!~t(n, r = []).join('').indexOf(c) }
 	},
 	hidden: function () { return function (n) { return !n.offsetWidth*n.offsetHeight } },
 	visible: function () { return function (n) { return !!n.offsetWidth*n.offsetHeight } },
-	odd: function() { return t.s['nth-child']('odd') },
-	even: function() { return t.s['nth-child']('even') },
+	odd: function() { return m.s['nth-child']('odd') },
+	even: function() { return m.s['nth-child']('even') },
 	eq: function(_, a, b, i) { i|=0; return function(){ return !i-- } },
-	first: function() { return t.s.eq(0) },
-	last: function() { return t.s.eq(this.length-1) },
+	first: function() { return m.s.eq(0) },
+	last: function() { return m.s.eq(this.length-1) },
 	seq: function(_, i, l, s) { return s = s.split(','), s[1] = s[1] || this.length, function(n, i){ return i >= s[0] && i <= s[1] } },
-	gt: function(_, a, b, i) { return t.s.seq(''+i) },
-	lt: function(_, a, b, i) { return t.s.seq('0,'+i) },
+	gt: function(_, a, b, i) { return m.s.seq(''+i) },
+	lt: function(_, a, b, i) { return m.s.seq('0,'+i) },
 	'#': function (n) { return function (t){ return t.id === n } },
-	'.': function (n) { return t.s['[']('className', '*=', n) },
-	'': function (n) { return t.s['[']('nodeName', '=', n, 'i') },
+	'.': function (n) { return m.s['[']('className', '*=', n) },
+	'': function (n) { return m.s['[']('nodeName', '=', n, 'i') },
 	'*': function () { return function (n) { return n[g]('*') } },
 	'>': function () { return function (n, r, c) {
 		for (r = [], n = n.childNodes, c = 0; n[c]; c++) n[c].nodeType == 1 && r.push(n[c]);
