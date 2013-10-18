@@ -1,0 +1,10 @@
+,
+	// get/set Attributes
+	attr: function(k, v, u){
+		if (v === u && '' + k !== (k || '')) {
+			for (v in k) this.attr(v, k[v])
+			return this
+		}
+		return k !== u && v !== u ? this.each(function () { this.setAttribute(k, this[k] = v); }) : this[0] ?
+		  	this[0][k] || this[0].getAttribute(k) || '' : ''
+	}
