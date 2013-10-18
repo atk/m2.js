@@ -1,0 +1,13 @@
+,
+	/* 
+		CSS3 Selector RegExp (matches a-f)
+
+		a=[>~* +,] (traversal),
+		b=[[#.:[]""] (marker: id, class, attr, pseudo, tag if empty),
+		c=name,
+		d="(" for pseudo, comparison for attr,
+		e=attribute value
+		f=pseudo value
+	*/
+	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g
+);
