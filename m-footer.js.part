@@ -1,0 +1,8 @@
+
+}(
+	'prototype',
+	document,
+	'querySelectorAll',
+	'getElementsByTagName',
+	'script',
+	[]
