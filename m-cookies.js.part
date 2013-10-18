@@ -1,0 +1,21 @@
+
+/* Cookie
+   	m.cookie([required:cookie name string]) // returns cookie if set or ''
+   	m.cookie({
+		name: '[required: cookie name string]',
+		value: '[required: cookie value string]',
+		date: [optional: Date() object or time in milliseconds until expiry],
+		domain: '[optional: domain string]',
+		path: '[optional: path string]',
+		extra: '[optional: extra string, e.g. "secure"]'
+   	}) // sets cookie based on object
+*/
+m[c] = function (o) {
+	if ('' + o === o)
+		return (new RegExp('(^|[ ;])'+e(o)+'=([^;]+)')).test(d[c]) && unescape(RegExp.$2);
+	o && o.name && o.value && (d[c] = e(o.name) + '=' + e(o.value) +
+		(o.date ? ('; expires=' + (o.date instanceof Date ? o.date : new Date(new Date() * 1 + o.date)).toGMTString()) : '') +
+		(o.domain ? ('; domain=' + o.domain) : '') +
+		(o.path ? '; path=' + o.path : '') +
+		(o.extra || '') + ';')
+}
