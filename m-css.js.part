@@ -1,0 +1,10 @@
+,
+	// get/set CSS attributes
+	css: function(k, v){
+		if (!v && '' + k !== (k || '')) {
+			for (v in k) this.css(v, k[v])
+			return this
+		}
+		return k && v ? this.each(function () { this.style[k] = v; }) : !this[0] ? '' :
+		  	this[0][v='currentStyle'] ? this[0][v][k] : window.getComputedStyle(this[0])[k] || this[0].style[k]
+	}
