@@ -1,0 +1,3 @@
+,
+	// read/write HTML
+	html : function(h, u){ return h === u ? this[0].innerHTML : this.each(function (n) { n.innerHTML = h }) }
