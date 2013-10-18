@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>m².js - modular micro framework</title>
+<style>
+html, body { font: 100% sans-serif; }
+h1 { font-size: 250%; font-weight: 400; }
+h2 { font-size: 125%; }
+h3 { font-size: 120%; }
+h4 { font-size: 110%; }
+h5 { font-size: 100%; }
+pre { padding: 20px; }
+/* syntax highlighting */
+/* regexp */
+.f-1, .f-1 * {color:#092;}
+/* string */
+.f1,.f1 * {color:#d14;}
+/* comment */
+.f2,.f2 * {color:#999;font-style:italic;}
+/* keyword */
+.f3,.f3 * {color:#000;font-weight: 700;}
+/* predefined object */
+.f4,.f4 * {color:#08B;}
+/* number */
+.f5,.f5 * {color:#099;}
+/* bracket, operator */
+.f6 {color:#000;}
+</style>
+<script type="text/javascript" src="m.js"></script>
+</head>
+<body>
+<h1>m².js - modular micro framework</h1>
+<p>Modular microframework</p>
+<ul>
+<li>1818 - 11205 bytes commented/uncompressed</li>
+<li>891 - 6868 bytes compressed using Google Closure Compiler</li>
+<li>519 - 2706 bytes compressed/gzipped using Google Closure Compiler</li>
+</ul>
+<p>&copy; 2013 Alex Kloss.</p>
+<h2>Features</h2>
+<ul>
+	<li><input type="checkbox" id="basic" value="on" disabled="disabled" style="display:none" checked/>Basic Framework: Main Object, DOMready, Iterator
+		<ul>
+			<li>Easily extendable</li>
+			<li>Minimal size</li>
+			<li>Simple usage through chaining</li>
+			<li>jQuery-like syntax</li>
+			<li>Licensed under GPLv2</li>
+		</ul>
+	</li>
+	<li>DOM Selection: <label for="selector-simple"><input type="radio" name="selector" id="selector-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="selector-full"><input type="radio" name="selector" id="selector-full" value="full"/> Full (all browsers, additional selectors)</label></li>
+	<li><label for="events"><input type="checkbox" name="events" id="events" value="on"> DOM Events</label></li>
+	<li><label for="html"><input type="checkbox" name="html" id="html" value="on"> HTML inspection/manipulation</label></li>
+	<li><label for="attr"><input type="checkbox" name="attr" id="attr" value="on"> DOM Attribute inspection/manipulation</label></li>
+	<li><label for="css"><input type="checkbox" name="css" id="css" value="on"> CSS Attribute inspection/manipulation</label></li>
+	<li>ClassName inspection/manipulation: <label for="class-none"><input type="radio" name="class" id="class-none" value="none" checked/> None</label> <label for="class-simple"><input type="radio" name="class" id="class-simple" value="simple"/> Single Method m.cls('has|set|get|toggle', name, value)</label> <label for="class-full"><input type="radio" name="class" id="class-full" value="full"/> With convenience methods</label></li>
+	<li>AJAX: <label for="ajax-none"><input type="radio" name="ajax" id="ajax-none" value="none" checked/> None</label> <label for="ajax-simple"><input type="radio" name="ajax" id="ajax-simple" value="simple"/> Simple</label> <label for="ajax-full"><input type="radio" name="ajax" id="ajax-full" value="full"/> With convenience loader</label></li>
+	<li><label for="jsonp"><input type="checkbox" name="jsonp" id="jsonp" value="on"> JSONp</label></li>
+	<li><label for="cookies"><input type="checkbox" name="cookies" id="cookies" value="on"> Cookies</label></li>
+</ul>
+<button id="build">Build</button> <span id="length"></span>
+<pre id="code">[Code appears here]</pre>
+<script type="text/javascript">
+m(function(){
+var jsre = /(\B\/(?:\\.|[^\n/*])(?:\\.|[^\n/])*\/[gim]*)|("(?:\\.|\\\r*\n|[^\n"])*"|'(?:\\.|\\\r*\n|[^\n'])*')|(\/\/[^\n]*\n|\/\*[\x00-\xff\u00\uffff]*?\*\/)|\b(abstract|boolean|break|byte|case|catch|char|class|const|continue|debugger|default|delete|do|double|else|enum|export|extends|false|final|finally|float|for|function|goto|if|implements|import|in|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|true|try|typeof|var|void|volatile|while|with)\b|\b(Array|Boolean|Date|Function|Math|Number|Object|RegExp|String|document|window|arguments)\b|(\d[\d\.eE]*)|([\x28-\x2b\x2d\x3a-\x3f\x5b\x5d\x5e\x7b-\x7e]+|\x2f|\.(?=\D))/g, 
+	jshighlight = function(c,r){return c.replace(r,function(f,i){for(i=7;~i*!arguments[i--];);return i?'<t class=f'+i+'>'+f.replace('<','&lt;')+'</t>':''})}, 
+	jsprepare = function(d){return jshighlight(d.replace(/(['"])(.*?)\1/g,function(f,q,s){return q+s.replace(/&/g,'&amp;')+q}),jsre)},
+	parts = {
+		'm-top.js.part': 'basic',
+		'm-top-cookie.js.part': 'cookies',
+		'm-top-query.js.part': 'selector-full',
+		'm-head.js.part': 'basic',
+		'm-query-simple.js.part': 'selector-simple',
+		'm-query-full.js.part': 'selector-full',
+		'm-events.js.part': 'events',
+		'm-html.js.part': 'html',
+		'm-attr.js.part': 'attr',
+		'm-css.js.part': 'css',
+		'm-class-simple.js.part': 'class-simple',
+		'm-class-full.js.part': 'class-full',
+		'm-ajax-loader.js.part': 'ajax-full',
+		'm-prototype.js.part': 'basic',
+		'm-class-extra.js.part': 'class-full',
+		'm-query-selectors.js.part': 'selector-full',
+		'm-iterator.js.part': 'basic',
+		'm-ajax-simple.js.part': 'ajax-simple',
+		'm-ajax-full.js.part': 'ajax-full',
+		'm-jsonp.js.part': 'jsonp',
+		'm-cookies.js.part': 'cookies',
+		'm-footer.js.part': 'basic',
+		'm-footer-cookie.js.part': 'cookies',
+		'm-query-full-footer.js.part': 'selector-full',
+		'm-query-simple-footer.js.part': 'selector-simple'
+	},
+	build = function(r){
+	r = [];
+	m.each(parts, function(k, v){ k && v && m('#'+k+':checked').length && r.push(m.ajax({url: v}).responseText) });
+	r = r.join('')
+	m('#length').html(r.length+' bytes commented/uncompressed');
+	m('#code').html(jsprepare(r))
+};
+window.build = build;
+m('#build').on('click', build)
+});
+</script>
+<h2>TODO</h2>
+<ul>
+	<li>Improve Documentation</li>
+	<li>More modular control over selectors (maybe even additional selectors)</li>
+	<li>Additional functionality (as modules)
+		<ul>
+			<li>m(s).val(), m(s).val(value)</li>
+			<li>m.url</li>
+			<li>m.er(s, f) - Element ready</li>
+			<li>m.ua - User Agent detection</li>
+		</ul>
+	</li>
+</ul>
+<h2>Functionality</h2>
+<style>
+#functionality { margin: 0; padding: 0; }
+#functionality label { background: #FFFFFF; border: 1px solid #DDDDDD; cursor: pointer; }
+#selectors, #domevents, #manipulation, #iterator, #networking { display: block; margin: 0; padding: 0 1em 1em; overflow: hidden;  }
+#selectors { background: #FFFFCC; }
+#selectors > ul > li { float: left; }
+#pseudoattributes { width: 40em; }
+#pseudoattributes li { float: left; width: 12em; }
+#domevents { background: #FFEEDD; }
+#manipulation { background: #FFEEEE; }
+#manipulation > ul > li { float: left; margin-right: 3em; }
+#iterator { background: #DDEEFF; }
+#networking { background: #DDFFEE; }
+#networking > ul > li { float: left; margin-right: 3em; }
+</style>
+<ul id="functionality">
+	<li id="selectors">
+		<h3>m(s) - Selectors</h3>
+		<h4><label for="selector-simple">Simple DOM Selection</label></h4>
+		<p>Simple DOM Selection is solely based on <a href="http://www.w3.org/TR/selectors-api/#queryselectorall" target="_blank">querySelectorAll()</a>, which is <a href="http://caniuse.com/queryselector" target="_blank">not supported on some obsolete browsers</a> and may not provide all possible selectors.
+		<h4><label for="selector-full">Full DOM Selection</label></h4>
+		<ul>
+			<li>
+				<h5>Basic/Traversing</h5>
+				<ul>
+					<li>body - tag name</li>
+					<li>#id - id</li>
+					<li>.class - class name</li>
+					<li>* - Everything</li>
+					<li>&gt; - Direct Childs</li>
+					<li>~ - Siblings</li>
+					<li>+ - Next</li>
+					<li>, - Multiple Selections</li>
+				</ul>
+			</li>
+			<li>
+				<h5>Attributes</h5>
+				<ul>
+					<li>[attr] - attribute presence</li>
+					<li>[attr=value] - attribute value</li>
+					<li>[attr!=value] - attribute negation</li>
+					<li>[attr^=value] - attribute start</li>
+					<li>[attr$=value] - attribute end</li>
+					<li>[attr*=value] - attribute part</li>
+					<li>[attr~=value] - Separate attribute part</li>
+					<li>[attr|=value] - attribute subpart before -</li>
+				</ul>
+			</li>
+			<li id="pseudoattributes">
+				<h5>Pseudo Attributes</h5>
+				<ul>
+					<li>:first-child</li>
+					<li>:nth-child(2n+1)</li>
+					<li>:nth-of-type(odd)</li>
+					<li>:odd</li>
+					<li>:even</li>
+					<li>:eq(7)</li>
+					<li>:last-child</li>
+					<li>:nth-last-child(even)</li>
+					<li>:nth-last-of-type(3)</li>
+					<li>:only-child</li>
+					<li>:only-of-type</li>
+					<li>:seq(2,5)</li>
+					<li>:gt(2)</li>
+					<li>:lt(5)</li>
+					<li>:empty</li>
+					<li>:target</li>
+					<li>:lang(en)</li>
+					<li>:enabled</li>
+					<li>:disabled</li>
+					<li>:checked</li>
+					<li>:not([simple selector])</li>
+					<li>:root</li>
+					<li>:has([simple selector])</li>
+					<li>:contains(text)</li>
+					<li>:hidden</li>
+					<li>:visible</li>
+					<li>:checkbox</li>
+					<li>:file</li>
+					<li>:image</li>
+					<li>:password</li>
+					<li>:radio</li>
+					<li>:reset</li>
+					<li>:submit</li>
+					<li>:text</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+	<li id="domevents">
+		<h3>m(f), m(s).on(t, f), m(s).off(t, f) - Events</h3>
+		<ul>
+			<li>m(f) - DOMready (basic)</li>
+			<li>m(s).on(t, f) - Bind DOM Event*</li>
+			<li>m(s).off(t, f) - Unbind DOM Event*</li>
+		</ul>
+		<p>* requires <label for="events">DOM Events</label></p>
+	</li>
+	<li id="manipulation">
+		<h3>m(s).attr|css|html|cls - Manipulation</h3>
+		<ul>
+			<li>
+				<h4><label for="attr">m(s).attr - DOM Attributes</label></h4>				
+				<ul>
+					<li>m(s).attr('name')</li>
+					<li>m(s).attr('name', value)</li>
+					<li>m(s).attr({name: 'value'})</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="css">m(s).css - CSS Attributes</label></h4>				
+				<ul>
+					<li>m(s).css('name')</li>
+					<li>m(s).css('name', value)</li>
+					<li>m(s).css({name: 'value'})</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="html">m(s).html - HTML Content</label></h4>				
+				<ul>
+					<li>m(s).html()</li>
+					<li>m(s).html('&lt;html code&gt;')</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="class-simple">m(s).cls - ClassName</label></h4>				
+				<ul>
+					<li>m(s).cls('has|set|remove|toggle', 'name', 'opt:value')</li>
+					<li>m(s).hasClass('name')**</li>
+					<li>m(s).setClass('name')**</li>
+					<li>m(s).removeClass('name')**</li>
+					<li>m(s).toggleClass('name')**</li>
+				</ul>
+				<p>** Convenience Methods provided by <label for="class-full">additional module</label></p>
+			</li>
+		</ul>
+	</li>
+	<li id="iterator">
+		<h3>m.each(o, f), m(s).each(f) - Iterator</h3>
+		<ul>
+			<li>m.each({key, value}, function(value, key){ /* this == value */ })</li>
+			<li>m.each([1, 2, 3], function(value, key){ /* this == value */ })</li>
+			<li>m(s).each(function(node, idx){ /* this == node */ })</li>
+		</ul>
+	</li>
+	<li id="networking">
+		<h3>m.ajax(o), m.jsonp(o), m.cookie(o) - Networking/Server</h3>
+		<ul>
+			<li>
+				<h4><label for="ajax-simple">m.ajax(o)</label></h4>
+				m.ajax({configuration object}) - yields AJAX Request object
+				<h5>Configuration Object</h5>
+				<ul>
+					<li>url (required): Request URL</li>
+					<li>method (optional): [get]|head|post</li>
+					<li>callback (optional): called on readyStateChange, makes request async</li>
+					<li>user (optional): username for HTTP/Auth</li>
+					<li>password (optional): password for HTTP/Auth</li>
+					<li>data (optional): data for POST request</li>
+				</ul>
+				<br/>m(s).load(url), m(s).load(obj) - <label for="ajax-full">Convenience loader</label>; callback not supported.
+			</li>			
+			<li>
+				<h4><label for="jsonp">m.jsonp(o)</label></h4>
+				m.jsonp({configuration object}) - yields script tag for JSONp-Request
+				<h5>Configuration Object</h5>
+				<ul>
+					<li>url (required): Request URL, "?" at the end will be replaced with callback name</li>
+					<li>callback (optional): will be called from JSONp-Request</li>
+					<li>_ (optional): callback name, if it needs to be pre-defined</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="cookies">m.cookie(o)</label></h4>
+				m.cookie(name) - returns cookie value<br/>
+				m.cookie({cookie object})
+				<h5>Cookie Object</h5>				
+				<ul>
+					<li>name (required): Cookie name</li>
+					<li>value (required): Cookie value</li>
+					<li>date (optional): Date() object or time in milliseconds until expiry</li>
+					<li>domain (optional): domain string</li>
+					<li>path (optional): path string</li>
+					<li>extra (optional): extra string, e.g. "secure"</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+</ul>
+</body>
+</html>
