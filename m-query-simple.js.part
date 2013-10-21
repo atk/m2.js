@@ -1,5 +1,0 @@
-,
-	// DOM (sub)query
-	find: function (c) {
-		return this.filter(function (n){ return n[q](c) })
-	}
