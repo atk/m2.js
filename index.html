@@ -1,52 +1,551 @@
 <!DOCTYPE html>
 <html>
+<head>
+<meta charset="UTF-8"/>
+<title>m².js - modular micro framework</title>
+<style>
+html, body { font: 100% sans-serif; }
+h1 { font-size: 250%; font-weight: 400; }
+h2 { font-size: 125%; }
+h3 { font-size: 120%; }
+h4 { font-size: 110%; }
+h5 { font-size: 100%; }
+pre { padding: 20px; }
+/* syntax highlighting */
+/* regexp */
+.f-1, .f-1 * {color:#092;}
+/* string */
+.f1,.f1 * {color:#d14;}
+/* comment */
+.f2,.f2 * {color:#999;font-style:italic;}
+/* keyword */
+.f3,.f3 * {color:#000;font-weight: 700;}
+/* predefined object */
+.f4,.f4 * {color:#08B;}
+/* number */
+.f5,.f5 * {color:#099;}
+/* bracket, operator */
+.f6 {color:#000;}
+</style>
+<script type="text/javascript">
+// m² 0.0.1 - modular JS micro framework (c) 2013 by Alex Kloss
+!function (p, d, q, g, j, a/**cookie**/, c, e/**query-full**/, r/**/) {
+/*
+	Initialisation:
+	- instantiation with "new" if necessary
+	- DOM queries vs. other functions (handled via "i"nit method)
 
-  <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="m2.js : m².js - modular micro framework" />
+	m([DOM query, Array, DOM node, onready callback function], [opt: DOM query base])
+*/
+m = function (q, b) { return this instanceof m ? q + '' === q ? m(b || d).find(q) : this.i(q) : new m(q, b) }
+m[p] = {
+	// basic length
+	length: 0,
+	// initialisation for everything but functions or DOM queries
+	i: function (q) { q && a.push.apply(this, q.nodeType ? [q] : /^f/.test(typeof q) ? m(d).r(q) : q.length ? q : []) },
+	// DOMready
+	r: function (f) { (function t(){ /c/.test(d.readyState) ? f() : setTimeout(t, 99) })(); return this },
+	// Iterator
+	each: function (a) {
+		return m.each(this, a)
+	},
+	// Filtering m(...).filter([function returning either true to keep the node or something like an Array to replace it])
+	filter: function (f, r) {
+		r = []
+		this.each(function (n, i, c, o) {
+			c = f ? f.call(n,n,i) : !0
+			c = c === !0 ? [n] : c || []
+			for (o = c.length; o--; i < 0 && r.push(n))
+				for (n = c[o], i = r.length; i-- && n !== r[i];);
+		})
+		r.reverse()
+		return a.push.apply(o = new m([]), r), o
+	},
+	// DOM (sub)query
+	find: function (c/**query-full**/, b, s, n, o, x/**/) { /**query-full**/
+		try {
+			/**/return this.filter(function (n){ return n[q](c) }) /**query-full**/
+		} catch (e) {
+			s = []
+			o = this
+			n = o.filter()
+			r.lastIndex = 1;
+			(' '+c+',').replace(r, function (_, a, b, c, d, e, f) {
+				_ && (a == ',' ? (n.each(function (n) { s.push(n) }), n = o.filter()) : (a = m.s[b == ':' ? c : b == '[' ? d || b : a ? a : b]) ? (a = a.call(n, c, d, e, f)) ? (n = n.filter(a)) : (x = 'filter call failed') : (x = 'no matching filter found'))
+				if (x) throw x;
+			})
+			return m(s).filter();
+		}
+	/**/}/**events**/,	
+	// DOM event binding
+	on: function (t, c) {
+		this.each(function (n, e, h, a) {
+			h = m[p].trigger
+			n['_' + t] ? n['_' + t].push(c) : (n['_' + t] = [c], n[a = 'addEventListener'] ? n[a](t, h) : n.attachEvent('on' + t, h));
+		});
+	},
+	// DOM event unbinding
+	off: function (t, c) {
+		this.each(function (n, e, h, r) {
+			h = m[p].trigger
+			n['_' + t] = c && m[p].filter.call(n['_' + t], function () { return this != c })
+			if (!n['_' + t] || !n['_' + t].length) n[r = 'removeEventListener'] ? n[r](t, h) : n.detachEvent('on' + t, h)
+		})
+	},
+	// Event chain trigger
+	trigger: function (t, r) {
+		t = t.type ? t : { type: t }
+		return this instanceof m ? this.each(function(n){ m[p].trigger.call(n, t) }) : (m.each(this['_'+t.type], function(c){ r = c.call(this, t || window.event) === !1 && r }), !r)
+	}/**html**/,
+	// read/write HTML
+	html : function(h, u){ return h === u ? this[0].innerHTML : this.each(function (n) { n.innerHTML = h }) }/**attr**/,
+	// get/set Attributes
+	attr: function(k, v, u){
+		if (v === u && '' + k !== (k || '')) {
+			for (v in k) this.attr(v, k[v])
+			return this
+		}
+		return k !== u && v !== u ? this.each(function () { this.setAttribute(k, this[k] = v); }) : this[0] ?
+			this[0][k] || this[0].getAttribute(k) || '' : ''
+	}/**css**/,
+	// get/set CSS attributes
+	css: function(k, v){
+		if (!v && '' + k !== (k || '')) {
+			for (v in k) this.css(v, k[v])
+			return this
+		}
+		return k && v ? this.each(function () { this.style[k] = v; }) : !this[0] ? '' :
+			this[0][v='currentStyle'] ? this[0][v][k] : window.getComputedStyle(this[0])[k] || this[0].style[k]
+	}/**class**/,
+	// has/add/remove/toggle class names (convenience functions below)
+	cls: function (v, n, t, c, r) {
+		t = this[0],
+		r = t[c = 'className'].replace(eval('/\\b'+n+'\\b/g'), '')
+		return 'has' == v ? r != t[c] : (t[c] = { add: 1, toggle: r == t[c] }[v] ? r + ' ' + n : r, this)
+	}/**ajax-full**/,
+	// convenient AJAX loading
+	load: function (u, t, c) {
+		t = this,
+		c = function (h) {
+			h = this.responseText
+			t.each(function (n) { n.innerHTML = h })
+		}
+		m.ajax(u.url ? (u.callback = c, u) : { url: u, callback: c });
+	}/**/,
+	// this makes most development consoles interpret the output as Array
+	splice: a.splice
+}/**class-full**/
+// class name convenience functions
+'has add remove toggle'.replace(/\w+/g, function(x) {
+	if (x) m[p][x+'Class'] = function (c) { return this.cls(x, c) }
+})/**query-full**/
+// Selector functions: each returns a function that will be used to filter the output (re-use where possible and reasonable)
+m.s = {
+	'[': function (k, c, v, i) {
+		v = c ? new RegExp((({ '^=': '^', '~=': '(^|\\s)', '=': '^', '!=': '^', '|=': '^' })[c] || '') +
+			((v || '').replace(/[.+*()]/g, '\\\1') || '.+') +
+			(({ '$=': '$', '=': '$', '!=': '$', '~=': '(\\s|$)', '|=': '(-|$)' })[c] || ''), i) : /.+/;
+		return function(n){ return !!(v.test(n[k] || n.getAttribute(k)) ^ (c == '!=')) };
+	},
+	'nth-of-type': function (n, s, i, c, l) {
+		c = c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c;
+		/(\d+)(n\+(\d*)|)/.test(c) && (i = RegExp.$1, s = RegExp.$3);
+		return function (t, c) {
+			for (t = this.parentNode[g](n || this.nodeName), c = l ? t.length - i + s : i - s; l ? (c -= s >= 0) : (c += s < t.length);) if (t[c] == this) return !0
+		}
+	},
+	'nth-last-of-type': function (n, s, i, c) { return m.s['nth-of-type'](c, s, i, n, 1) },
+	'nth-child': function (_, a, b, c) { return m.s['nth-of-type'](c,0,0,'*') },
+	'nth-last-child': function (_, a, b, c) { return m.s['nth-last-of-type'](c,0,0,'*') },
+	'first-child': function () { return function(){ return this.parentNode[g]('*')[0] == this } },
+	'last-child': function () { return function(n){ return n=this.parentNode[g]('*'), n[n.length-1] == this } },
+	'first-of-type': function () { return function(){ return this.parentNode[g](this.nodeName)[0] == this } },
+	'last-of-type': function () { return function(n){ return n=this.parentNode[g](this.nodeName), n[n.length-1] == this } },
+	'only-child': function () { return function(){ return this.parentNode[g]('*').length == 1 } },
+	'only-of-type': function () { return function(){ return this.parentNode[g](this.nodeName).length == 1 } },
+	empty: function () { return function () { return !this.childNodes.length } },
+	target: function (t) { return this['[']('id', '=', /^#(.+)$/.test(location.search) ? RegExp.$1 : '#') },
+	lang: function () { return this['[']('lang', '|=', l, 'i') },
+	enabled: function () { return function () { return !this.disabled } },
+	disabled: function () { return function () { return this.disabled } },
+	checked: function () { return function () { return this.checked } },
+	not: function (_, a, b, n) { return n = m(n), function (l) { for (l = 0; n[l];) if (n[l++] == this) return !1; return !0 } },
+	root: function() { return function(n){ return n == d.documentElement } },
+	has: function(_, a, b, q) { return function(n){ return t(n).find(q).length > 0 } },
+	contains: function (a, t, r, c) {
+		t = function(n, r){ return n ? (n.nodeType == 3 && r.push(n.data), t(n.firstChild, r), t(n.nextSibling, r)) : r }
+		return function(n) { return !!~t(n, r = []).join('').indexOf(c) }
+	},
+	hidden: function () { return function (n) { return !n.offsetWidth*n.offsetHeight } },
+	visible: function () { return function (n) { return !!n.offsetWidth*n.offsetHeight } },
+	odd: function() { return m.s['nth-child']('odd') },
+	even: function() { return m.s['nth-child']('even') },
+	eq: function(_, a, b, i) { i|=0; return function(){ return !i-- } },
+	first: function() { return m.s.eq(0) },
+	last: function() { return m.s.eq(this.length-1) },
+	seq: function(_, i, l, s) { return s = s.split(','), s[1] = s[1] || this.length, function(n, i){ return i >= s[0] && i <= s[1] } },
+	gt: function(_, a, b, i) { return m.s.seq(''+i) },
+	lt: function(_, a, b, i) { return m.s.seq('0,'+i) },
+	'#': function (n) { return function (t){ return t.id === n } },
+	'.': function (n) { return m.s['[']('className', '*=', n) },
+	'': function (n) { return m.s['[']('nodeName', '=', n, 'i') },
+	'*': function () { return function (n) { return n[g]('*') } },
+	'>': function () { return function (n, r, c) {
+		for (r = [], n = n.childNodes, c = 0; n[c]; c++) n[c].nodeType == 1 && r.push(n[c]);
+		return r }
+	},
+	'+': function () { return function (n) { for (;n = n.nextSibling;) if (n[c].nodeType == 1) return n } },
+	'~': function () { return function (n, r) {
+		for (r = []; n = n.nextSibling; n[c].nodeType == 1 && r.push(n));
+		return r }
+	}
+}
+// extra selectors
+m.s[' '] = m.s['*']
+'checkbox file image password radio reset submit text'.replace(/\w+/g, function (x) {
+	if (x) m.s[x] = function() { return m.s['[']('type', '=', x, 'i') }
+});/**/
+// Iterator: m.each([object/array], [callback])
+m.each = function (a, b, c, d) {
+	if (a instanceof Array || a instanceof m) for (c = 0, d = a.length; c < d; ++c) b.call(a[c], a[c], c, a);
+	else for (c in a) b.call(a[c], a[c], c, a);
+	return a
+}/**ajax**/
+/* Ajax: 
+	m.ajax({ 
+		url: '[required: url string]', 
+		method: '[optional: get*|post|head]', 
+		callback: [optional: function],
+		user: [optional: username string],
+		password: [optional: password string],
+		data: [optional: data string]
+	}) 
+	returns RequestObject for synchronous or asynchronous use (latter only if callback is specified)
+*/
+m.ajax = function (o, x) {
+	x = new XMLHttpRequest()
+	x.open(o.method || 'get', o.url, o.callback && (x.onreadystatechange = o.callback), o.user, o.password)
+	x.send(o.data)
+	return x
+}/**jsonp**/
+/* JSONp:
+	m.jsonp({
+		url: '[required: url string]',
+		callback: [optional: callback function],
+		"_": '[optional: callback name - do not use unless you know what you are doing]'
+	})
+*/
+m.jsonp = function (o, h, s) {
+	h = d[g]('head')[0],
+	s = d.createElement(j),
+	o.callback && (this[o._ = o._ || j + 0 | i++ * new Date()] = function(){
+		h.removeChild(s)
+		o.callback.apply(this, arguments)
+		delete this[[]._]
+	}),
+	s.src = o.url.replace(/\??$/, o._),
+	h.appendChild(s)
+	return s
+}/**cookie**/
+/* Cookie
+	m.cookie([required:cookie name string]) // returns cookie if set or ''
+	m.cookie({
+		name: '[required: cookie name string]',
+		value: '[required: cookie value string]',
+		date: [optional: Date() object or time in milliseconds until expiry],
+		domain: '[optional: domain string]',
+		path: '[optional: path string]',
+		extra: '[optional: extra string, e.g. "secure"]'
+	}) // sets cookie based on object
+*/
+m[c] = function (o) {
+	if ('' + o === o)
+		return (new RegExp('(^|[ ;])'+e(o)+'=([^;]+)')).test(d[c]) && unescape(RegExp.$2);
+	o && o.name && o.value && (d[c] = e(o.name) + '=' + e(o.value) +
+		(o.date ? ('; expires=' + (o.date instanceof Date ? o.date : new Date(new Date() * 1 + o.date)).toGMTString()) : '') +
+		(o.domain ? ('; domain=' + o.domain) : '') +
+		(o.path ? '; path=' + o.path : '') +
+		(o.extra || '') + ';')
+}/**/
+}(
+	'prototype',
+	document,
+	'querySelectorAll',
+	'getElementsByTagName',
+	'script',
+	[]/**cookie**/,
+	'cookie',
+	escape/**query-full**/,
+	/* 
+		CSS3 Selector RegExp (matches a-f)
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>m2.js</title>
-  </head>
-
-  <body>
-
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/atk/m2.js">View on GitHub</a>
-
-          <h1 id="project_title">m2.js</h1>
-          <h2 id="project_tagline">m².js - modular micro framework</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/atk/m2.js/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/atk/m2.js/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h1>
-<a name="mjs" class="anchor" href="#mjs"><span class="octicon octicon-link"></span></a>m².js</h1>
-
-<p>m².js - modular micro framework (c) 2013 by Alex Kloss</p>
-      </section>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">m2.js maintained by <a href="https://github.com/atk">atk</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-    
-
-  </body>
+		a=[>~* +,] (traversal),
+		b=[[#.:[]""] (marker: id, class, attr, pseudo, tag if empty),
+		c=name,
+		d="(" for pseudo, comparison for attr,
+		e=attribute value
+		f=pseudo value
+	*/
+	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**/
+);
+</script>
+</head>
+<body>
+<h1>m².js - modular micro framework</h1>
+<p>Modular microframework</p>
+<ul>
+<li>1.67kb - 10.3kb commented/uncompressed</li>
+<li>879b - 6.68kb bytes compressed using Google Closure Compiler</li>
+<li>510b - 2.6kb bytes compressed/gzipped using Google Closure Compiler</li>
+</ul>
+<p>&copy; 2013 Alex Kloss.</p>
+<h2>Features</h2>
+<ul>
+	<li><input type="checkbox" id="basic" value="on" disabled="disabled" style="display:none" checked/>Basic Framework: Main Object, DOMready, Iterator
+		<ul>
+			<li>Easily extendable</li>
+			<li>Minimal size</li>
+			<li>Simple usage through chaining</li>
+			<li>jQuery-like syntax</li>
+			<li>Licensed under GPLv2</li>
+		</ul>
+	</li>
+	<li>DOM Selection: <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, additional selectors)</label></li>
+	<li><label for="events"><input type="checkbox" name="events" id="events" value="on"> DOM Events</label></li>
+	<li><label for="html"><input type="checkbox" name="html" id="html" value="on"> HTML inspection/manipulation</label></li>
+	<li><label for="attr"><input type="checkbox" name="attr" id="attr" value="on"> DOM Attribute inspection/manipulation</label></li>
+	<li><label for="css"><input type="checkbox" name="css" id="css" value="on"> CSS Attribute inspection/manipulation</label></li>
+	<li>ClassName inspection/manipulation: <label for="no-class"><input type="radio" name="class" id="no-class" value="none" checked/> None</label> <label for="class-simple"><input type="radio" name="class" id="class-simple" value="simple"/> Single Method m.cls('has|set|get|toggle', name, value)</label> <label for="class-full"><input type="radio" name="class" id="class-full" value="full"/> With convenience methods</label></li>
+	<li>AJAX: <label for="no-ajax"><input type="radio" name="ajax" id="no-ajax" value="none" checked/> None</label> <label for="ajax-simple"><input type="radio" name="ajax" id="ajax-simple" value="simple"/> Simple</label> <label for="ajax-full"><input type="radio" name="ajax" id="ajax-full" value="full"/> With convenience loader</label></li>
+	<li><label for="jsonp"><input type="checkbox" name="jsonp" id="jsonp" value="on"> JSONp</label></li>
+	<li><label for="cookie"><input type="checkbox" name="cookie" id="cookie" value="on"> Cookies</label></li>
+</ul>
+<button id="build">Build</button> <span id="length"></span>
+<pre id="code">[Code appears here]</pre>
+<script type="text/javascript">
+m(function(){
+var jsre = /(\B\/(?:\\.|[^\n/*])(?:\\.|[^\n/])*\/[gim]*)|("(?:\\.|\\\r*\n|[^\n"])*"|'(?:\\.|\\\r*\n|[^\n'])*')|(\/\/[^\n]*\n|\/\*[\x00-\xff\u00\uffff]*?\*\/)|\b(abstract|boolean|break|byte|case|catch|char|class|const|continue|debugger|default|delete|do|double|else|enum|export|extends|false|final|finally|float|for|function|goto|if|implements|import|in|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|true|try|typeof|var|void|volatile|while|with)\b|\b(Array|Boolean|Date|Function|Math|Number|Object|RegExp|String|document|window|arguments)\b|(\d[\d\.eE]*)|([\x28-\x2b\x2d\x3a-\x3f\x5b\x5d\x5e\x7b-\x7e]+|\x2f|\.(?=\D))/g, 
+	jshighlight = function(c,r){return c.replace(r,function(f,i){for(i=7;~i*!arguments[i--];);return i?'<t class=f'+i+'>'+f.replace('<','&lt;')+'</t>':''})}, 
+	jsprepare = function(d){return jshighlight(d.replace(/(['"])(.*?)\1/g,function(f,q,s){return q+s.replace(/&/g,'&amp;')+q}),jsre)},
+	build = function(s, r){
+		s = '';
+		r = m('script')[0].innerHTML.replace(/([^\0]*?)\/\*\*([\w-]*?)\**\//g, function(f, c, n) {
+			f = (!s || (s.replace(/\s+/g, '')) && m('[id^='+s+']:checked').length) ? c : '';
+			s = n;
+			return f
+		});
+		m('#length').html(r.length+' bytes commented/uncompressed');
+		m('#code').html(jsprepare(r))
+	};
+m('#build').on('click', build)
+});
+</script>
+<h2>TODO</h2>
+<ul>
+	<li>Improve Documentation</li>
+	<li>Remove .attr dependency from DOM Events</li>
+	<li>More modular control over selectors (maybe even additional selectors)</li>
+	<li>Additional functionality (as modules)
+		<ul>
+			<li>m(s).val(), m(s).val(value)</li>
+			<li>m.url</li>
+			<li>m.er(s, f) - Element ready</li>
+			<li>m.ua - User Agent detection</li>
+		</ul>
+	</li>
+	<li>.live() Events</li>
+</ul>
+<h2>Functionality</h2>
+<style>
+#functionality { margin: 0; padding: 0; }
+#functionality label { background: #FFFFFF; border: 1px solid #DDDDDD; cursor: pointer; }
+#selectors, #domevents, #manipulation, #iterator, #networking { display: block; margin: 0; padding: 0 1em 1em; overflow: hidden;  }
+#selectors { background: #FFFFCC; }
+#selectors > ul > li { float: left; }
+#pseudoattributes { width: 40em; }
+#pseudoattributes li { float: left; width: 12em; }
+#domevents { background: #FFEEDD; }
+#manipulation { background: #FFEEEE; }
+#manipulation > ul > li { float: left; margin-right: 3em; }
+#iterator { background: #DDEEFF; }
+#networking { background: #DDFFEE; }
+#networking > ul > li { float: left; margin-right: 3em; }
+</style>
+<ul id="functionality">
+	<li id="selectors">
+		<h3>m(s) - Selectors</h3>
+		<h4><label for="selector-simple">Simple DOM Selection</label></h4>
+		<p>Simple DOM Selection is solely based on <a href="http://www.w3.org/TR/selectors-api/#queryselectorall" target="_blank">querySelectorAll()</a>, which is <a href="http://caniuse.com/queryselector" target="_blank">not supported on some obsolete browsers</a> and may not provide all possible selectors.
+		<h4><label for="selector-full">Full DOM Selection</label></h4>
+		<ul>
+			<li>
+				<h5>Basic/Traversing</h5>
+				<ul>
+					<li>body - tag name</li>
+					<li>#id - id</li>
+					<li>.class - class name</li>
+					<li>* - Everything</li>
+					<li>&gt; - Direct Childs</li>
+					<li>~ - Siblings</li>
+					<li>+ - Next</li>
+					<li>, - Multiple Selections</li>
+				</ul>
+			</li>
+			<li>
+				<h5>Attributes</h5>
+				<ul>
+					<li>[attr] - attribute presence</li>
+					<li>[attr=value] - attribute value</li>
+					<li>[attr!=value] - attribute negation</li>
+					<li>[attr^=value] - attribute start</li>
+					<li>[attr$=value] - attribute end</li>
+					<li>[attr*=value] - attribute part</li>
+					<li>[attr~=value] - Separate attribute part</li>
+					<li>[attr|=value] - attribute subpart before -</li>
+				</ul>
+			</li>
+			<li id="pseudoattributes">
+				<h5>Pseudo Attributes</h5>
+				<ul>
+					<li>:first-child, :first</li>
+					<li>:nth-child(2n+1)</li>
+					<li>:nth-of-type(odd)</li>
+					<li>:odd</li>
+					<li>:even</li>
+					<li>:eq(7)</li>
+					<li>:last-child, :last</li>
+					<li>:nth-last-child(even)</li>
+					<li>:nth-last-of-type(3)</li>
+					<li>:only-child</li>
+					<li>:only-of-type</li>
+					<li>:seq(2,5)</li>
+					<li>:gt(2)</li>
+					<li>:lt(5)</li>
+					<li>:empty</li>
+					<li>:target</li>
+					<li>:lang(en)</li>
+					<li>:enabled</li>
+					<li>:disabled</li>
+					<li>:checked</li>
+					<li>:not([simple selector])</li>
+					<li>:root</li>
+					<li>:has([simple selector])</li>
+					<li>:contains(text)</li>
+					<li>:hidden</li>
+					<li>:visible</li>
+					<li>:checkbox</li>
+					<li>:file</li>
+					<li>:image</li>
+					<li>:password</li>
+					<li>:radio</li>
+					<li>:reset</li>
+					<li>:submit</li>
+					<li>:text</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+	<li id="domevents">
+		<h3>m(f), m(s).on(t, f), m(s).off(t, f) - Events</h3>
+		<ul>
+			<li>m(f) - DOMready (basic)</li>
+			<li>m(s).on(t, f) - Bind DOM Event*</li>
+			<li>m(s).off(t, f) - Unbind DOM Event*</li>
+			<li>m(s).trigger(t) - Trigger Event Chain</li>
+		</ul>
+		<p>* requires <label for="events">DOM Events</label></p>
+	</li>
+	<li id="manipulation">
+		<h3>m(s).attr|css|html|cls - Manipulation</h3>
+		<ul>
+			<li>
+				<h4><label for="attr">m(s).attr - DOM Attributes</label></h4>				
+				<ul>
+					<li>m(s).attr('name')</li>
+					<li>m(s).attr('name', value)</li>
+					<li>m(s).attr({name: 'value'})</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="css">m(s).css - CSS Attributes</label></h4>				
+				<ul>
+					<li>m(s).css('name')</li>
+					<li>m(s).css('name', value)</li>
+					<li>m(s).css({name: 'value'})</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="html">m(s).html - HTML Content</label></h4>				
+				<ul>
+					<li>m(s).html()</li>
+					<li>m(s).html('&lt;html code&gt;')</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="class-simple">m(s).cls - ClassName</label></h4>				
+				<ul>
+					<li>m(s).cls('has|set|remove|toggle', 'name', 'opt:value')</li>
+					<li>m(s).hasClass('name')**</li>
+					<li>m(s).setClass('name')**</li>
+					<li>m(s).removeClass('name')**</li>
+					<li>m(s).toggleClass('name')**</li>
+				</ul>
+				<p>** Convenience Methods provided by <label for="class-full">additional module</label></p>
+			</li>
+		</ul>
+	</li>
+	<li id="iterator">
+		<h3>m.each(o, f), m(s).each(f), m(s).filter(f) - Iterator</h3>
+		<ul>
+			<li>m.each({key, value}, function(value, key){ /* this == value */ })</li>
+			<li>m.each([1, 2, 3], function(value, key){ /* this == value */ })</li>
+			<li>m(s).each(function(node, idx){ /* this == node */ })</li>
+			<li>m(s).filter(function(node, idx){ return true || NodeCollection })</li>
+		</ul>
+	</li>
+	<li id="networking">
+		<h3>m.ajax(o), m.jsonp(o), m.cookie(o) - Networking/Server</h3>
+		<ul>
+			<li>
+				<h4><label for="ajax-simple">m.ajax(o)</label></h4>
+				m.ajax({configuration object}) - yields AJAX Request object
+				<h5>Configuration Object</h5>
+				<ul>
+					<li>url (required): Request URL</li>
+					<li>method (optional): [get]|head|post</li>
+					<li>callback (optional): called on readyStateChange, makes request async</li>
+					<li>user (optional): username for HTTP/Auth</li>
+					<li>password (optional): password for HTTP/Auth</li>
+					<li>data (optional): data for POST request</li>
+				</ul>
+				<br/>m(s).load(url), m(s).load(obj) - <label for="ajax-full">Convenience loader</label>; callback not supported.
+			</li>			
+			<li>
+				<h4><label for="jsonp">m.jsonp(o)</label></h4>
+				m.jsonp({configuration object}) - yields script tag for JSONp-Request
+				<h5>Configuration Object</h5>
+				<ul>
+					<li>url (required): Request URL, "?" at the end will be replaced with callback name</li>
+					<li>callback (optional): will be called from JSONp-Request</li>
+					<li>_ (optional): callback name, if it needs to be pre-defined</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="cookies">m.cookie(o)</label></h4>
+				m.cookie(name) - returns cookie value<br/>
+				m.cookie({cookie object})
+				<h5>Cookie Object</h5>				
+				<ul>
+					<li>name (required): Cookie name</li>
+					<li>value (required): Cookie value</li>
+					<li>date (optional): Date() object or time in milliseconds until expiry</li>
+					<li>domain (optional): domain string</li>
+					<li>path (optional): path string</li>
+					<li>extra (optional): extra string, e.g. "secure"</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+</ul>
+</body>
 </html>
