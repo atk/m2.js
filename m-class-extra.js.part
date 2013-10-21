@@ -1,5 +1,0 @@
-
-// class name convenience functions
-'has add remove toggle'.replace(/\w+/g, function(x) {
-	if (x) m[p][x+'Class'] = function (c) { return this.cls(x, c) }
-})
