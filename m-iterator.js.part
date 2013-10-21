@@ -1,7 +1,0 @@
-
-// Iterator: m.each([object/array], [callback])
-m.each = function (a, b, c, d) {
-	if (a instanceof Array || a instanceof m) for (c = 0, d = a.length; c < d; ++c) b.call(a[c], a[c], c, a);
-	else for (c in a) b.call(a[c], a[c], c, a);
-	return a
-}
