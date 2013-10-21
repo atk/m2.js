@@ -89,7 +89,7 @@ m[p] = {
 		this.each(function (n, e, h, r) {
 			h = m[p].trigger
 			n['_' + t] = c && m[p].filter.call(n['_' + t], function () { return this != c })
-			if (!n['_' + t] || !n['_' + t].length) n[r = 'removeEventListener'] ? n[r](t, h) : n.detachEvent('on' + t, h)
+			if (!(n['_' + t] || 0).length) n[r = 'removeEventListener'] ? n[r](t, h) : n.detachEvent('on' + t, h)
 		})
 	},
 	// Event chain trigger
