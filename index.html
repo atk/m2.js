@@ -187,7 +187,7 @@ m.s = {
 	gt: function(_, a, b, i) { return m.s.seq(''+i) },
 	lt: function(_, a, b, i) { return m.s.seq('0,'+i) },
 	'#': function (n) { return function (t){ return t.id === n } },
-	'.': function (n) { return m.s['[']('className', '*=', n) },
+	'.': function (n) { return m.s['[']('className', '~=', n) },
 	'': function (n) { return m.s['[']('nodeName', '=', n, 'i') },
 	'*': function () { return function (n) { return n[g]('*') } },
 	'>': function () { return function (n, r, c) {
