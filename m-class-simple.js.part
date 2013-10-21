@@ -1,7 +1,0 @@
-,
-	// has/add/remove/toggle class names (convenience functions below)
-	cls: function (v, n, t, c, r) {
-		t = this[0],
-		r = t[c = 'className'].replace(eval('/\\b'+n+'\\b/g'), '')
-		return 'has' == v ? r != t[c] : (t[c] = { add: 1, toggle: r == t[c] }[v] ? r + ' ' + n : r, this)
-	}
