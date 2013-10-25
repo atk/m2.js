@@ -3,15 +3,17 @@
 <head>
 <meta charset="UTF-8"/>
 <title>m².js - modular micro framework</title>
+<meta http-equiv="x-ua-compatible" content="ie=edge"/>
 <meta viewport="width=device-width"/>
 <style>
-html, body, * { font-size: 100%; font-family: sans-serif; }
+html, body, * { font: 13px sans-serif; }
 h1 { font-size: 250%; font-weight: 400; }
 h2 { font-size: 125%; }
 h3 { font-size: 120%; }
 h4 { font-size: 110%; }
 h5 { font-size: 100%; }
 pre { padding: 20px; }
+pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 /* syntax highlighting */
 /* regexp */
 .f-1, .f-1 * {color:#092;}
@@ -30,37 +32,33 @@ pre { padding: 20px; }
 </style>
 <script type="text/javascript">
 // m² 0.0.1 - modular JS micro framework (c) 2013 by Alex Kloss
-!function (p, d, q, g, j, a/**cookie**/, c, e/**query-full**/, r/**/) {
+!function (p, d, q, g, j, l, a/**cookie**/, c, e/**query-full**/, r/**useragent**/, z/**/, u) {
 /*
 	Initialisation:
 	- instantiation with "new" if necessary
 	- DOM queries vs. other functions (handled via "i"nit method)
-
 	m([DOM query, Array, DOM node, onready callback function], [opt: DOM query base])
 */
-m = function (q, b) { return this instanceof m ? q + '' === q ? m(b || d).find(q) : this.i(q) : new m(q, b) }
+m = function (q, b) { return this instanceof m ? q + '' === q ? m(b || d).find(q) : this.i(q/**elementready**/, b/**/) : new m(q, b) }
 m[p] = {
 	// basic length
 	length: 0,
 	// initialisation for everything but functions or DOM queries
-	i: function (q) { q && a.push.apply(this, q.nodeType ? [q] : /^f/.test(typeof q) ? m(d).r(q) : q.length ? q : []) },
+	i: function (q/**elementready**/, b/**/) { q && a.push.apply(this, q.nodeType ? [q] : /^f/.test(typeof q) ? m(d).r(q/**elementready**/, b/**/) : q.length ? q : []) },
 	// DOMready
-	r: function (f) { (function t(){ /c/.test(d.readyState) ? f() : setTimeout(t, 99) })(); return this },
+	r: function (f/**elementready**/, b/**/) { (function t(){ /**elementready**/(b ? m(b)[l] : /**//c/.test(d.readyState)/**elementready**/)/**/ ? f() : setTimeout(t, 99) })(); return [] },
 	// Iterator
-	each: function (a) {
-		return m.each(this, a)
-	},
-	// Filtering m(...).filter([function returning either true to keep the node or something like an Array to replace it])
+	each: function (a) { return m.each(this, a) },
+	// Filtering m(...).filter([function returning either true to keep the node or something like an Array to replace it]), otherwise works as unique()
 	filter: function (f, r) {
 		r = []
 		this.each(function (n, i, c, o) {
-			c = f ? f.call(n,n,i) : !0
-			c = c === !0 ? [n] : c || []
-			for (o = c.length; o--; i < 0 && r.push(n))
-				for (n = c[o], i = r.length; i-- && n !== r[i];);
+			c = !f || f.call(n, n, i)
+			c = c === !0 ? [n] : c && c[0] ? c : []
+			for (o = 0; n = c[o++]; ~i || r.push(n))
+				for (i = r[l]; i-- && n !== r[i];);
 		})
-		r.reverse()
-		return a.push.apply(o = new m([]), r), o
+		return m(r)
 	},
 	// DOM (sub)query
 	find: function (c/**query-full**/, b, s, n, o, x/**/) { /**query-full**/
@@ -72,41 +70,45 @@ m[p] = {
 			n = o.filter()
 			r.lastIndex = 1;
 			(' '+c+',').replace(r, function (_, a, b, c, d, e, f) {
-				_ && (a == ',' ? (n.each(function (n) { s.push(n) }), n = o.filter()) : (a = m.s[b == ':' ? c : b == '[' ? d || b : a ? a : b]) ? (a = a.call(n, c, d, e, f)) ? (n = n.filter(a)) : (x = 'filter call failed') : (x = 'no matching filter found'))
+				_ && (a == ',' ? (n.each(function (n) { s.push(n) }), n = o.filter()) : (a = m.s[b == ':' ? c : b || a || '']) ?
+					(a = a.call(n, f || c, d, e)) ? (n = n.filter(a)) : (x = 'filter call failed: ' + _) : (x = 'no matching filter found: ' + _))
 				if (x) throw x;
 			})
 			return m(s).filter();
 		}
-	/**/}/**events**/,	
+	/**/}/**events**/,
 	// DOM event binding
 	on: function (t, c) {
-		this.each(function (n, e, h, a) {
+		return this.each(function (n, e, h, a) {
 			h = m[p].trigger
 			n['_' + t] ? n['_' + t].push(c) : (n['_' + t] = [c], n[a = 'addEventListener'] ? n[a](t, h) : n.attachEvent('on' + t, h));
 		});
 	},
 	// DOM event unbinding
 	off: function (t, c) {
-		this.each(function (n, e, h, r) {
+		return this.each(function (n, e, h, r) {
 			h = m[p].trigger
 			n['_' + t] = c && m[p].filter.call(n['_' + t], function () { return this != c })
-			if (!(n['_' + t] || 0).length) n[r = 'removeEventListener'] ? n[r](t, h) : n.detachEvent('on' + t, h)
+			if (!(n['_' + t] || 0)[l]) n[r = 'removeEventListener'] ? n[r](t, h) : n.detachEvent('on' + t, h)
 		})
 	},
 	// Event chain trigger
-	trigger: function (t, r) {
+	trigger: function (t, r, n) {
+		t = t || window.event
 		t = t.type ? t : { type: t }
-		return this instanceof m ? this.each(function(n){ m[p].trigger.call(n, t) }) : (m.each(this['_'+t.type], function(c){ r = c.call(this, t || window.event) === !1 && r }), !r)
+		t[n='target'] || (t[n] = t.srcElement)
+		return this instanceof m ? this.each(function(n){ m[p].trigger.call(n, t) }) :
+			(m.each((n = t.srcElement || this)['_'+t.type], function(c){ r = c.call(n, t) === !1 && r }), !r)
 	}/**html**/,
 	// read/write HTML
-	html : function(h, u){ return h === u ? this[0].innerHTML : this.each(function (n) { n.innerHTML = h }) }/**attr**/,
+	html : function(h){ return h === u ? this[0].innerHTML : this.each(function (n) { n.innerHTML = h }) }/**attr**/,
 	// get/set Attributes
-	attr: function(k, v, u){
+	attr: function(k, v){
 		if (v === u && '' + k !== (k || '')) {
 			for (v in k) this.attr(v, k[v])
 			return this
 		}
-		return k !== u && v !== u ? this.each(function () { this.setAttribute(k, this[k] = v); }) : this[0] ?
+		return k && v !== u ? this.each(function (n) { n.setAttribute(k, v), n[k] = v; }) : this[0] ?
 			this[0][k] || this[0].getAttribute(k) || '' : ''
 	}/**css**/,
 	// get/set CSS attributes
@@ -123,6 +125,25 @@ m[p] = {
 		t = this[0],
 		r = t[c = 'className'].replace(eval('/\\b'+n+'\\b/g'), '')
 		return 'has' == v ? r != t[c] : (t[c] = { add: 1, toggle: r == t[c] }[v] ? r + ' ' + n : r, this)
+	}/**value**/,
+	// get/set value
+	val: function (v) { return '' + v === v ? this.each(function (n) { value = v }) : this[0].value }/**selection**/,
+	/*
+		inspect/manipulate/create Selection
+		m(s).sel() - inspect Selection -> { start, end, length, text }
+		m(s).sel({ start: 0-n, end: 0-n, text: 'xy' }) -> create/manipulate selection
+	*/
+	sel: function (o, n, c, e, v) {
+		n = this[0]
+		v = 'value'
+		v in n || (v = 'innerText')
+		return n ? o ? ((o.text && (n[v] = n[v].substr(0, o.start||0) + o.text + n[v].substr((o.start||0)+(o.end||n[v][l])))),
+			(o.start && o.end && (((c = d[c='createRange'] ? d[c]() : d.createTextRange())), c.setStart ?
+			(c.setStart(n, o.start), c.setEnd(n, o.end)) : (c.moveToElementText(n), c.moveStart(o.start), c.moveEnd(o.end), c.select())), this)) :
+			(o='selection', c = 1+n[o+'End'] ? { start: n[o+'Start'], end: n[o+'End'] } :
+			(n.focus(), o = d[o].createRange(), c = n.createTextRange(), e = c.duplicate(), e.moveToBookmark(o.getBookmark()),
+			e.setEndPoint('EndToStart', c), c = { start: e.text[l], end: e.text[l] + o.text[l] }),
+			c.text = n[v].substr(c.start, (c[l] = c.end - c.start)), c): {}
 	}/**ajax-full**/,
 	// convenient AJAX loading
 	load: function (u, t, c) {
@@ -143,37 +164,50 @@ m[p] = {
 // Selector functions: each returns a function that will be used to filter the output (re-use where possible and reasonable)
 m.s = {
 	'[': function (k, c, v, i) {
-		v = c ? new RegExp((({ '^=': '^', '~=': '(^|\\s)', '=': '^', '!=': '^', '|=': '^' })[c] || '') +
+		v = c ? eval('/' + (({ '^=': '^', '~=': '(^|\\s)', '=': '^', '!=': '^', '|=': '^' })[c] || '') +
 			((v || '').replace(/[.+*()]/g, '\\\1') || '.+') +
-			(({ '$=': '$', '=': '$', '!=': '$', '~=': '(\\s|$)', '|=': '(-|$)' })[c] || ''), i) : /.+/;
+			(({ '$=': '$', '=': '$', '!=': '$', '~=': '(\\s|$)', '|=': '(-|$)' })[c] || '') + '/' + i) : /.+/;
 		return function(n){ return !!(v.test(n[k] || n.getAttribute(k)) ^ (c == '!=')) };
 	},
-	'nth-of-type': function (n, s, i, c, l) {
+	'#': function (n) { return function (t){ return t.id === n } },
+	'.': function (n) { return m.s['[']('className', '~=', n) },
+	'': function (n) { return m.s['[']('nodeName', '=', n, 'i') },
+	'*': function () { return function (n) { return n[g] && n[g]('*') } },
+	'>': function () { return function (n, r, c) {
+		for (r = [], n = n.childNodes, c = 0; n[c]; c++) n[c].nodeType == 1 && r.push(n[c]);
+		return r }
+	},
+	'+': function () { return function (n) { for (;n = n.nextSibling;) if (n[c].nodeType == 1) return n } },
+	'~': function () { return function (n, r) {
+		for (r = []; n = n.nextSibling; n[c].nodeType == 1 && r.push(n));
+		return r }
+	},
+	'nth-of-type': function (c, s, i, n, r) {
 		c = c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c;
 		/(\d+)(n\+(\d*)|)/.test(c) && (i = RegExp.$1, s = RegExp.$3);
 		return function (t, c) {
-			for (t = this.parentNode[g](n || this.nodeName), c = l ? t.length - i + s : i - s; l ? (c -= s >= 0) : (c += s < t.length);) if (t[c] == this) return !0
+			for (t = this.parentNode[g](n || this.nodeName), c = r ? t[l] - i + s : i - s; r ? (c -= s >= 0) : (c += s < t[l]);) if (t[c] == this) return !0
 		}
 	},
-	'nth-last-of-type': function (n, s, i, c) { return m.s['nth-of-type'](c, s, i, n, 1) },
-	'nth-child': function (_, a, b, c) { return m.s['nth-of-type'](c,0,0,'*') },
-	'nth-last-child': function (_, a, b, c) { return m.s['nth-last-of-type'](c,0,0,'*') },
-	'first-child': function () { return function(){ return this.parentNode[g]('*')[0] == this } },
-	'last-child': function () { return function(n){ return n=this.parentNode[g]('*'), n[n.length-1] == this } },
-	'first-of-type': function () { return function(){ return this.parentNode[g](this.nodeName)[0] == this } },
-	'last-of-type': function () { return function(n){ return n=this.parentNode[g](this.nodeName), n[n.length-1] == this } },
-	'only-child': function () { return function(){ return this.parentNode[g]('*').length == 1 } },
-	'only-of-type': function () { return function(){ return this.parentNode[g](this.nodeName).length == 1 } },
-	empty: function () { return function () { return !this.childNodes.length } },
+	'nth-last-of-type': function (c) { return m.s['nth-of-type'](c, 0, 0, 0, 1) },
+	'nth-child': function (c) { return m.s['nth-of-type'](c, 0, 0, '*') },
+	'nth-last-child': function (c) { return m.s['nth-of-type'](c, 0, 0, '*', 1) },
+	'first-of-type': function (t) { return function(n){ return this.parentNode[g](t || n.nodeName)[0] == n } },
+	'last-of-type': function (t) { return function(n){ return n=this.parentNode[g](t || n.nodeName), n[n[l]-1] == this } },
+	'only-of-type': function (t) { return function(){ return this.parentNode[g](t || this.nodeName)[l] == 1 } },
+	'first-child': function () { return m.s['first-of-type']('*') },
+	'last-child': function () { return m.s['last-of-type']('*') },
+	'only-child': function () { return m.s['only-of-type']('*') },
+	empty: function () { return function (n) { return !n.childNodes[l] } },
 	target: function (t) { return this['[']('id', '=', /^#(.+)$/.test(location.search) ? RegExp.$1 : '#') },
-	lang: function () { return this['[']('lang', '|=', l, 'i') },
-	enabled: function () { return function () { return !this.disabled } },
-	disabled: function () { return function () { return this.disabled } },
-	checked: function () { return function () { return this.checked } },
-	not: function (_, a, b, n) { return n = m(n), function (l) { for (l = 0; n[l];) if (n[l++] == this) return !1; return !0 } },
+	lang: function (c) { return this['[']('lang', '|=', c, 'i') },
+	enabled: function () { return function (n) { return !n.disabled } },
+	disabled: function () { return function (n) { return !!n.disabled } },
+	checked: function () { return function (n) { return !!n.checked } },
+	not: function (n) { return n = m(n), function (i) { for (i = 0; n[i];) if (n[i++] == this) return !1; return !0 } },
 	root: function() { return function(n){ return n == d.documentElement } },
-	has: function(_, a, b, q) { return function(n){ return t(n).find(q).length > 0 } },
-	contains: function (a, t, r, c) {
+	has: function(q) { return function(n){ return m(n).find(q)[l] > 0 } },
+	contains: function (c, t, r) {
 		t = function(n, r){ return n ? (n.nodeType == 3 && r.push(n.data), t(n.firstChild, r), t(n.nextSibling, r)) : r }
 		return function(n) { return !!~t(n, r = []).join('').indexOf(c) }
 	},
@@ -183,23 +217,10 @@ m.s = {
 	even: function() { return m.s['nth-child']('even') },
 	eq: function(_, a, b, i) { i|=0; return function(){ return !i-- } },
 	first: function() { return m.s.eq(0) },
-	last: function() { return m.s.eq(this.length-1) },
-	seq: function(_, i, l, s) { return s = s.split(','), s[1] = s[1] || this.length, function(n, i){ return i >= s[0] && i <= s[1] } },
-	gt: function(_, a, b, i) { return m.s.seq(''+i) },
-	lt: function(_, a, b, i) { return m.s.seq('0,'+i) },
-	'#': function (n) { return function (t){ return t.id === n } },
-	'.': function (n) { return m.s['[']('className', '~=', n) },
-	'': function (n) { return m.s['[']('nodeName', '=', n, 'i') },
-	'*': function () { return function (n) { return n[g]('*') } },
-	'>': function () { return function (n, r, c) {
-		for (r = [], n = n.childNodes, c = 0; n[c]; c++) n[c].nodeType == 1 && r.push(n[c]);
-		return r }
-	},
-	'+': function () { return function (n) { for (;n = n.nextSibling;) if (n[c].nodeType == 1) return n } },
-	'~': function () { return function (n, r) {
-		for (r = []; n = n.nextSibling; n[c].nodeType == 1 && r.push(n));
-		return r }
-	}
+	last: function() { return m.s.eq(this[l]-1) },
+	seq: function(s) { return s = s.split(','), s[1] = s[1] || this[l], function(n, i){ return i >= s[0] && i <= s[1] } },
+	gt: function(i) { return m.s.seq(''+i) },
+	lt: function(i) { return m.s.seq('0,'+i) }
 }
 // extra selectors
 m.s[' '] = m.s['*']
@@ -208,24 +229,26 @@ m.s[' '] = m.s['*']
 });/**/
 // Iterator: m.each([object/array], [callback])
 m.each = function (a, b, c, d) {
-	if (a instanceof Array || a instanceof m) for (c = 0, d = a.length; c < d; ++c) b.call(a[c], a[c], c, a);
+	if (a instanceof Array || a instanceof m) for (c = 0, d = a[l]; c < d; ++c) b.call(a[c], a[c], c, a);
 	else for (c in a) b.call(a[c], a[c], c, a);
 	return a
 }/**ajax**/
-/* Ajax: 
-	m.ajax({ 
-		url: '[required: url string]', 
-		method: '[optional: get*|post|head]', 
+/* Ajax:
+	m.ajax({
+		url: '[required: url string]',
+		method: '[optional: get*|post|head]',
 		callback: [optional: function],
 		user: [optional: username string],
 		password: [optional: password string],
 		data: [optional: data string]
-	}) 
+	})
 	returns RequestObject for synchronous or asynchronous use (latter only if callback is specified)
 */
 m.ajax = function (o, x) {
 	x = new XMLHttpRequest()
-	x.open(o.method || 'get', o.url, o.callback && (x.onreadystatechange = o.callback), o.user, o.password)
+	x.open(o.method || 'get', o.url, o.callback && (x.onreadystatechange = o.callback), o.user, o.password)/**ajax-init**/
+	o.init && o.init(x)/**ajax-header**/
+	m.each(o.header||[], function(v, k) { x.setRequestHeader(k, v) })/*ajax*/
 	x.send(o.data)
 	return x
 }/**jsonp**/
@@ -261,25 +284,57 @@ m.jsonp = function (o, h, s) {
 */
 m[c] = function (o) {
 	if ('' + o === o)
-		return (new RegExp('(^|[ ;])'+e(o)+'=([^;]+)')).test(d[c]) && unescape(RegExp.$2);
+		return (eval('/(^|[ ;])'+e(o)+'=([^;]+)/')).test(d[c]) && unescape(RegExp.$2);
 	o && o.name && o.value && (d[c] = e(o.name) + '=' + e(o.value) +
-		(o.date ? ('; expires=' + (o.date instanceof Date ? o.date : new Date(new Date() * 1 + o.date)).toGMTString()) : '') +
+		(o.date ? ('; expires=' + (new Date(+o.date === o.date ? +new Date() + o.date : o.date)).toGMTString()) : '') +
 		(o.domain ? ('; domain=' + o.domain) : '') +
 		(o.path ? '; path=' + o.path : '') +
 		(o.extra || '') + ';')
-}/**/
+}/**url**//*
+	m.url('url-string') // -> URL-object (similar to location, but o.search[key] yields value, though o.search+'' yields the full string
+*/
+m.url = function (u, o) {
+	u = (u || location.href).match(/^([^:\/\?#\.]*:?)(\/\/([^\/\?#:]*))?:?(\d*)(\.*\/[^?#]*)(\\?[^#]*)?(#.*)?$/)
+	o = { toString: function () { return '' + o.protocol + (o.host != '' ? '\/\/' : '') + o.host + o.pathname + o.search + o.hash; }, search: { toString: function(r) {
+			r = []
+			m.each(this, function(v, k){ (k || 'toString') != 'toString' && r.push(k + '=' + v) })
+			return r.join('&')
+		} } }
+	'href protocol base hostname port pathname search hash'.replace(/\w+/g, function(k, v, r) {
+		v = u.shift() || ''
+		k != 'search' ? (o[k] = v) : v.replace(/([^\?&=]+)=?([^&]*)?/g, function(f, i, d) { if (k) o[k][unescape(i)] = unescape(d || '') })
+	})
+	o.host = o.hostname + (o.port != '' ? ':' + o.port : '');
+	if (o.host.match(/^\.\.?$/)) o.path = o.host + o.path, o.host = '';
+	return o;
+}
+m.each(m.url(), function(v, k){ m.url[k] = v })/**useragent**/
+// useragent detection
+m.ua = function (o, x, i, v) {
+	o = { ua: navigator.userAgent.toLowerCase(), info: {} }
+	x = 'browser'
+	v = 'version'
+	o.ua.replace(/[\(\)]/g, ';').replace(/\s*(\w*?\ ?\w+[\:\s\;]?[^\d\s]*?)[\/\ ]([\d\.]*)/g, function(f, k, v) { o.info[k] = o.info[k] || v || !0; });
+	z.replace(/(\D+)(\d)/g, function(n, c, d) { 
+		n = +d ? x : 'os'
+		o.info[c] && (o[n] = o[n] || { name: c == 'opr' ? 'opera' : c, version: (+d ? o.info[v] : 0) || o.info[c] },
+			o[n][o[n].name] = parseFloat(o[n][v]) || o[n][v])
+	});
+	(i = /msie\ (\d+).*trident[ \/](\d+)/.exec(o.ua)) && (o[x][v] = +i[2] + 4, o[x].renderMode = +i[1])
+	return o
+}()/**/
 }(
 	'prototype',
 	document,
 	'querySelectorAll',
 	'getElementsByTagName',
 	'script',
+	'length',
 	[]/**cookie**/,
 	'cookie',
 	escape/**query-full**/,
-	/* 
+	/*
 		CSS3 Selector RegExp (matches a-f)
-
 		a=[>~* +,] (traversal),
 		b=[[#.:[]""] (marker: id, class, attr, pseudo, tag if empty),
 		c=name,
@@ -287,7 +342,8 @@ m[c] = function (o) {
 		e=attribute value
 		f=pseudo value
 	*/
-	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**/
+	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**useragent**/, 
+	'msie1opr1firefox1seamonkey1arora1iron1chrome1safari1opera1windows0windows nt0mac os0linux0android0iphone0ipad0ipod0blackberry0rim0'/**/
 );
 </script>
 </head>
@@ -295,14 +351,14 @@ m[c] = function (o) {
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework</p>
 <ul>
-<li>1.67kb - 10.3kb commented/uncompressed</li>
-<li>879b - 6.68kb bytes compressed using Google Closure Compiler</li>
-<li>510b - 2.6kb bytes compressed/gzipped using Google Closure Compiler</li>
+<li>1.7kb - 13.47kb commented/uncompressed</li>
+<li>838b - 8.65kb bytes compressed using Google Closure Compiler</li>
+<li>501b - 3.59kb bytes compressed/gzipped using Google Closure Compiler</li>
 </ul>
 <p>&copy; 2013 Alex Kloss.</p>
 <h2>Features</h2>
 <ul>
-	<li><input type="checkbox" id="basic" value="on" disabled="disabled" style="display:none" checked/>Basic Framework: Main Object, DOMready, Iterator
+	<li><input type="checkbox" id="basic" value="on" disabled="disabled" style="display:none" checked/>Basic Framework: Main Object, <a href="#domevents">DOMready</a>, <a href="#iterator">Iterator</a>
 		<ul>
 			<li>Easily extendable</li>
 			<li>Minimal size</li>
@@ -311,55 +367,107 @@ m[c] = function (o) {
 			<li>Licensed under GPLv2</li>
 		</ul>
 	</li>
-	<li>DOM Selection: <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, additional selectors)</label></li>
-	<li><label for="events"><input type="checkbox" name="events" id="events" value="on"> DOM Events</label></li>
-	<li><label for="html"><input type="checkbox" name="html" id="html" value="on"> HTML inspection/manipulation</label></li>
-	<li><label for="attr"><input type="checkbox" name="attr" id="attr" value="on"> DOM Attribute inspection/manipulation</label></li>
-	<li><label for="css"><input type="checkbox" name="css" id="css" value="on"> CSS Attribute inspection/manipulation</label></li>
-	<li>ClassName inspection/manipulation: <label for="no-class"><input type="radio" name="class" id="no-class" value="none" checked/> None</label> <label for="class-simple"><input type="radio" name="class" id="class-simple" value="simple"/> Single Method m.cls('has|set|get|toggle', name, value)</label> <label for="class-full"><input type="radio" name="class" id="class-full" value="full"/> With convenience methods</label></li>
-	<li>AJAX: <label for="no-ajax"><input type="radio" name="ajax" id="no-ajax" value="none" checked/> None</label> <label for="ajax-simple"><input type="radio" name="ajax" id="ajax-simple" value="simple"/> Simple</label> <label for="ajax-full"><input type="radio" name="ajax" id="ajax-full" value="full"/> With convenience loader</label></li>
-	<li><label for="jsonp"><input type="checkbox" name="jsonp" id="jsonp" value="on"> JSONp</label></li>
-	<li><label for="cookie"><input type="checkbox" name="cookie" id="cookie" value="on"> Cookies</label></li>
+	<li><a href="#selectors">DOM Selection:</a> <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, additional selectors)</label></li>
+	<li><label for="events"><input type="checkbox" name="events" id="events" value="on"> DOM Events</label> <a href="#domevents">[doc]</a></li>
+	<li><label for="elementready"><input type="checkbox" name="elementready" id="elementready" value="on"> ElementReady</label> <a href="#domevents">[doc]</a></li>
+	<li><label for="html"><input type="checkbox" name="html" id="html" value="on"> HTML inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
+	<li><label for="attr"><input type="checkbox" name="attr" id="attr" value="on"> DOM Attribute inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
+	<li><label for="css"><input type="checkbox" name="css" id="css" value="on"> CSS Attribute inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
+	<li> <a href="#manipulation">ClassName inspection/manipulation:</a> <label for="no-class"><input type="radio" name="class" id="no-class" value="none" checked/> None</label> <label for="class-simple"><input type="radio" name="class" id="class-simple" value="simple"/> Single Method m.cls('has|set|get|toggle', name, value)</label> <label for="class-full"><input type="radio" name="class" id="class-full" value="full"/> With convenience methods</label></li>
+	<li><label for="value"><input type="checkbox" name="value" id="value" value="on"> Form Value inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
+	<li><label for="selection"><input type="checkbox" name="selection" id="selection" value="on"> Selection inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
+	<li><a href="#networking">AJAX:</a> <label for="no-ajax"><input type="radio" name="ajax" id="no-ajax" value="none" checked/> None</label> <label for="ajax-simple"><input type="radio" name="ajax" id="ajax-simple" value="simple"/> Simple</label> <label for="ajax-full"><input type="radio" name="ajax" id="ajax-full" value="full"/> With convenience loader</label> <label for="ajax-init"><input type="checkbox" name="ajax-init" id="ajax-init" value="on"/> Init Callback</label> <label for="ajax-header"><input type="checkbox" name="ajax-header" id="ajax-header" value="on"/> Header Manipulation</label></li>
+	<li><label for="jsonp"><input type="checkbox" name="jsonp" id="jsonp" value="on"> JSONp</label> <a href="#networking">[doc]</a></li>
+	<li><label for="cookie"><input type="checkbox" name="cookie" id="cookie" value="on"> Cookies</label> <a href="#networking">[doc]</a></li>
+	<li><label for="url"><input type="checkbox" name="url" id="url" value="on"> URL</label> <a href="#networking">[doc]</a></li>
+	<li><label for="useragent"><input type="checkbox" name="useragent" id="useragent" value="on"> UserAgent</label> <a href="#client">[doc]</a></li>
 </ul>
-<button id="build">Build</button> <span id="length"></span>
-<pre id="code">[Code appears here]</pre>
+<button id="build">Build</button> <button id="full">Full</button> <button id="minimal">Minimal</button> <span id="length"></span>
+<h2>Development Code</h2>
+<pre id="devcode">[Code appears here]</pre>
+<h2>Compiled Code</h2>
+<pre id="livecode">[Code appears here]</pre>
 <script type="text/javascript">
+/* for debugging purposes on ie * /
+m.prototype.toString = function(r){
+	r = [];
+	this.each(function(n, i, t){ 
+		t = '<' + n.nodeName.toLowerCase();
+		'id class type name'.replace(/\w+/g, function(k) { t += m(n).attr(k) ? ' ' + k + '="' + m(n).attr(k) + '"' : '' });
+		r.push((i && (i % 10 == 0) ? '\n' : '') + t + '>');		
+	})
+	return 'm('+this.length+')[' + r.join(', ') + ']';
+}/**/
+
 m(function(){
-var jsre = /(\B\/(?:\\.|[^\n/*])(?:\\.|[^\n/])*\/[gim]*)|("(?:\\.|\\\r*\n|[^\n"])*"|'(?:\\.|\\\r*\n|[^\n'])*')|(\/\/[^\n]*\n|\/\*[\x00-\xff\u00\uffff]*?\*\/)|\b(abstract|boolean|break|byte|case|catch|char|class|const|continue|debugger|default|delete|do|double|else|enum|export|extends|false|final|finally|float|for|function|goto|if|implements|import|in|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|true|try|typeof|var|void|volatile|while|with)\b|\b(Array|Boolean|Date|Function|Math|Number|Object|RegExp|String|document|window|arguments)\b|(\d[\d\.eE]*)|([\x28-\x2b\x2d\x3a-\x3f\x5b\x5d\x5e\x7b-\x7e]+|\x2f|\.(?=\D))/g, 
-	jshighlight = function(c,r){return c.replace(r,function(f,i){for(i=7;~i*!arguments[i--];);return i?'<t class=f'+i+'>'+f.replace('<','&lt;')+'</t>':''})}, 
-	jsprepare = function(d){return jshighlight(d.replace(/(['"])(.*?)\1/g,function(f,q,s){return q+s.replace(/&/g,'&amp;')+q}),jsre)},
-	build = function(s, r){
-		s = '';
-		r = m('script')[0].innerHTML.replace(/([^\0]*?)\/\*\*([\w-]*?)\**\//g, function(f, c, n) {
-			f = (!s || (s.replace(/\s+/g, '')) && m('[id^='+s+']:checked').length) ? c : '';
-			s = n;
-			return f
-		});
-		m('#length').html(r.length+' bytes commented/uncompressed');
-		m('#code').html(jsprepare(r))
-	};
-m('#build').on('click', build)
+	document.createElement('t');
+	var jsre = /(\B\/(?:\\.|[^\n/*])(?:\\.|[^\n/])*\/[gim]*)|("(?:\\.|\\\r*\n|[^\n"])*"|'(?:\\.|\\\r*\n|[^\n'])*')|(\/\/[^\n]*\n|\/\*[\x00-\xff\u00\uffff]*?\*\/)|\b(abstract|boolean|break|byte|case|catch|char|class|const|continue|debugger|default|delete|do|double|else|enum|export|extends|false|final|finally|float|for|function|goto|if|implements|import|in|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|true|try|typeof|var|void|volatile|while|with)\b|\b(Array|Boolean|Date|Function|Math|Number|Object|RegExp|String|document|window|arguments)\b|(\d[\d\.eE]*)|([\x28-\x2b\x2d\x3a-\x3f\x5b\x5d\x5e\x7b-\x7e]+|\x2f|\.(?=\D))/g, 
+		jshighlight = function(c,r){return c.replace(r,function(f,i){for(i=7;~i*!arguments[i--];);return i?'<t class=f'+i+'>'+f.replace('<','&lt;')+'</t>':''})}, 
+	jspreparemsie = function(d){return jshighlight(d.replace(/(['"])(.*?)\1/g,function(f,q,s){return q+s.replace(/&/g,'&amp;')+q}),jsre).replace(/\n/g, '<br>').replace(/\t/g, ' &nbsp; &nbsp;')},
+		jsprepare = function(d){return jshighlight(d.replace(/(['"])(.*?)\1/g,function(f,q,s){return q+s.replace(/&/g,'&amp;')+q}),jsre)},
+		build = function(s, r){
+			s = '';
+			r = m('script').html().replace(/([^\0]*?)\/\*\*([\w-]*?)\**\//g, function(f, c, n) {
+				f = (!s || (s.replace(/\s+/g, '')) && m('[id^='+s+']:checked').length) ? c : '';
+				s = n;
+				return f
+			});
+			s = r.length+' bytes commented/uncompressed'
+			m('#devcode').html((m.ua.browser.renderMode || m.ua.browser.msie) < 8 ? jspreparemsie(r) : jsprepare(r))
+			if (m.ua.browser.msie) {
+				r = { compiledCode: '/* CORS Request to Google\'s Closure Compiler REST service not supported by MSIE */' };
+			} else {
+				r = JSON.parse(m.ajax({url: 'http://closure-compiler.appspot.com/compile', method: 'post', header: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, data: 'js_code='+encodeURIComponent(r)+'&compilation_level=ADVANCED_OPTIMIZATIONS&output_format=json&output_info=compiled_code&output_info=statistics'}).responseText)
+				s += ', '+r.statistics.compressedSize+' bytes compressed, ' + r.statistics.compressedGzipSize+' bytes compressed/gzipped'
+			}
+			m('#length').html(s)
+			m('#livecode').html((m.ua.browser.renderMode || m.ua.browser.msie) < 8 ? jspreparemsie(r.compiledCode) : jsprepare(r.compiledCode))
+		};
+	m('#build').on('click', build);
+	m('#full').on('click', function(){ m('input').attr('checked', true) });
+	m('#minimal').on('click', function(c){ 
+		m('input:checkbox').attr('checked', false);
+		c = {};
+		m(':radio').each(function(n){ c[n.name] = true; });
+		m.each(c, function(v, n) { (document.getElementsByName(n)[0] || {}).checked = true; })
+	});
+	m('#ajax-init, #ajax-header').on('change', function(){
+		if (m('#ajax-init:checked, #ajax-header:checked').length > 0 && 
+			m('#ajax-simple:checked, #ajax-full:checked').length == 0) {
+			m('#ajax-simple').attr('checked', true);
+		}
+	});
+	m('#no-ajax').on('change', function(){
+		if (this.checked) { m('#ajax-init, #ajax-header').attr('checked', false) }
+	})
 });
+
+//m(function(){console.log('iterator ready')}, '#iterator');
 </script>
 <h2>TODO</h2>
 <ul>
-	<li>Improve Documentation</li>
+	<li>More/Improved Documentation</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
+	<li>Module for simple selectors to improve speed on simple selections</li>
 	<li>Additional functionality (as modules)
 		<ul>
-			<li>m(s).val(), m(s).val(value)</li>
-			<li>m.url</li>
-			<li>m.er(s, f) - Element ready</li>
-			<li>m.ua - User Agent detection</li>
+			<li>?</li>
+		</ul>
+	</li>
+	<li>Improved (more beautiful) code
+		<ul>
+			<li>m().sel - IE Fallback (modularity?)</li>
 		</ul>
 	</li>
 	<li>.live() Events</li>
+	<li>Test Suite</li>
+	<li>Cheat Sheet</li>
 </ul>
 <h2>Functionality</h2>
 <style>
 #functionality { margin: 0; padding: 0; }
 #functionality label { background: #FFFFFF; border: 1px solid #DDDDDD; cursor: pointer; }
-#selectors, #domevents, #manipulation, #iterator, #networking { display: block; margin: 0; padding: 0 1em 1em; overflow: hidden;  }
+#selectors, #domevents, #manipulation, #iterator, #networking, #client { display: block; margin: 0; padding: 0 1em 1em; overflow: hidden;  }
 #selectors { background: #FFFFCC; }
 #selectors > ul > li { float: left; }
 #pseudoattributes { width: 40em; }
@@ -370,10 +478,11 @@ m('#build').on('click', build)
 #iterator { background: #DDEEFF; }
 #networking { background: #DDFFEE; }
 #networking > ul > li { float: left; margin-right: 3em; }
+#client { background: #EEEEEE; }
 </style>
 <ul id="functionality">
 	<li id="selectors">
-		<h3>m(s) - Selectors</h3>
+		<h3>m(s), m(s, b), m(n).find(s) - Selectors</h3>
 		<h4><label for="selector-simple">Simple DOM Selection</label></h4>
 		<p>Simple DOM Selection is solely based on <a href="http://www.w3.org/TR/selectors-api/#queryselectorall" target="_blank">querySelectorAll()</a>, which is <a href="http://caniuse.com/queryselector" target="_blank">not supported on some obsolete browsers</a> and may not provide all possible selectors.
 		<h4><label for="selector-full">Full DOM Selection</label></h4>
@@ -449,6 +558,7 @@ m('#build').on('click', build)
 		<h3>m(f), m(s).on(t, f), m(s).off(t, f) - Events</h3>
 		<ul>
 			<li>m(f) - DOMready (basic)</li>
+			<li>m(f, s) - <label for="elementready">ElementReady</label></li>
 			<li>m(s).on(t, f) - Bind DOM Event*</li>
 			<li>m(s).off(t, f) - Unbind DOM Event*</li>
 			<li>m(s).trigger(t) - Trigger Event Chain</li>
@@ -456,7 +566,7 @@ m('#build').on('click', build)
 		<p>* requires <label for="events">DOM Events</label></p>
 	</li>
 	<li id="manipulation">
-		<h3>m(s).attr|css|html|cls - Manipulation</h3>
+		<h3>m(s).attr|css|html|cls|val - Manipulation/Inspection</h3>
 		<ul>
 			<li>
 				<h4><label for="attr">m(s).attr - DOM Attributes</label></h4>				
@@ -492,6 +602,41 @@ m('#build').on('click', build)
 				</ul>
 				<p>** Convenience Methods provided by <label for="class-full">additional module</label></p>
 			</li>
+			<li>
+				<h4><label for="value">m(s).val(), m(s).val(v) - Value</label></h4>
+				<ul>
+					<li>m(s).val() - gets value of the first selected node</li>
+					<li>m(s).val(v) - sets value of every field</li>
+				</ul>
+			</li>
+			<li>
+				<h4><label for="selection">m(s).sel(), m(s).sel(o) - Selection</label></h4>
+				<ul>
+					<li>m(s).sel() - gets selection object</li>
+					<li>m(s).sel(o) - create/manipulate selection depending on object (length ignored)</li>
+				</ul>
+				<h5>Selection Object</h5>
+				<ul>
+					<li>start - start of selection (beginning at 0)</li>
+					<li>end - end of selection</li>
+					<li>length - length of selection</li>
+					<li>text - selected text (or replacement)</li>
+				</ul>
+				<input type="text" id="selectiontest" />
+				<span id="selectionview"></span>
+				<script type="text/javascript">
+				(function(s){					
+					m('#selectiontest').on('mousedown', function(e) { s = 1 }).on('mouseup', function () { s = 0 }).on('mousemove', function(e) {
+						if (!s) return;
+						e = m('#selectiontest').sel()
+						m('#selectionview').html(e.start + '-' + e.end + ': "' + e.text + '"')
+					}).on('keyup', function(e){
+						e = m('#selectiontest').sel()
+						m('#selectionview').html(e.start + '-' + e.end + ': "' + e.text + '"')
+					})
+				})()
+				</script>
+			</li>
 		</ul>
 	</li>
 	<li id="iterator">
@@ -504,7 +649,7 @@ m('#build').on('click', build)
 		</ul>
 	</li>
 	<li id="networking">
-		<h3>m.ajax(o), m.jsonp(o), m.cookie(o) - Networking/Server</h3>
+		<h3>m.ajax(o), m.jsonp(o), m.cookie(o), m.url(o) - Networking/Server</h3>
 		<ul>
 			<li>
 				<h4><label for="ajax-simple">m.ajax(o)</label></h4>
@@ -544,6 +689,38 @@ m('#build').on('click', build)
 					<li>extra (optional): extra string, e.g. "secure"</li>
 				</ul>
 			</li>
+			<li>
+				<h4><label for="url">m.url(u)</label></h4>
+				m.url("URL string") - returns URL object<br/>
+				m.url.hostname - m.url serves as the page's URL object, too
+				<h5>URL Object</h5>
+				The URL Object is rather similar to window.location, the main differences is the url.search (which will perform as an key-value storage for everything in its search, but yield an URI-Encoded string if coerced)
+			</li>
+		</ul>
+	</li>
+	<li id="client">
+		<h3><label for="useragent">m.ua - Browser/OS</label></h3>
+		m.ua.
+		<ul>
+			<li>
+				browser.
+				<ul>
+					<li>name: <script type="text/javascript">document.write(m.ua.browser.name);</script></li>
+					<li>version: <script type="text/javascript">document.write(m.ua.browser.version);</script></li>
+					<li><script type="text/javascript">document.write(m.ua.browser.name);</script>: <script type="text/javascript">document.write(m.ua.browser[m.ua.browser.name]);</script></li>
+					<script type="text/javascript">if (m.ua.browser.renderMode) document.write('<li>renderMode: '+m.ua.browser.renderMode+'</li>');</script>
+				</ul>
+			</li>
+			<li>
+				os.
+				<ul>
+					<li>name: <script type="text/javascript">document.write(m.ua.os.name);</script></li>
+					<li>version: <script type="text/javascript">document.write(m.ua.os.version);</script></li>
+					<li><script type="text/javascript">document.write(m.ua.os.name);</script>: <script type="text/javascript">document.write(m.ua.os[m.ua.os.name]);</script></li>					
+				</ul>
+			</li>
+			<li>info: Hash aller weiteren UA-Eigenschaften (key=value oder key=true)</li>
+			<li>ua: navigator.userAgent.toLowerCase() // <script type="text/javascript">document.write(m.ua.ua);</script></li>
 		</ul>
 	</li>
 </ul>
