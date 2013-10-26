@@ -39,14 +39,14 @@ pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 	- DOM queries vs. other functions (handled via "i"nit method)
 	m([DOM query, Array, DOM node, onready callback function], [opt: DOM query base])
 */
-m = function (q, b) { return this instanceof m ? q + '' === q ? m(b || d).find(q) : this.i(q/**elementready**/, b/**/) : new m(q, b) }
+m = function (q, b) { return this instanceof m ? q + '' === q ? m(b || d).find(q) : /^f/.test(typeof q) ? m(d).ready(q/**elementready**/, b/**/) : this.i(q) : new m(q, b) }
 m[p] = {
 	// basic length
 	length: 0,
 	// initialisation for everything but functions or DOM queries
-	i: function (q/**elementready**/, b/**/) { q && a.push.apply(this, q.nodeType ? [q] : /^f/.test(typeof q) ? m(d).r(q/**elementready**/, b/**/) : q.length ? q : []) },
+	i: function (q) { q && a.push.apply(this, q.nodeType ? [q] : q.length ? q : []) },
 	// DOMready
-	r: function (f/**elementready**/, b/**/) { (function t(){ /**elementready**/(b ? m(b)[l] : /**//c/.test(d.readyState)/**elementready**/)/**/ ? f() : setTimeout(t, 99) })(); return [] },
+	ready: function (f/**elementready**/, b/**/) { (function t(){ /**elementready**/(b ? m(b)[l] : /**//c/.test(d.readyState)/**elementready**/)/**/ ? f() : setTimeout(t, 99) })() },
 	// Iterator
 	each: function (a) { return m.each(this, a) },
 	// Filtering m(...).filter([function returning either true to keep the node or something like an Array to replace it]), otherwise works as unique()
@@ -71,22 +71,24 @@ m[p] = {
 			r.lastIndex = 1;
 			(' '+c+',').replace(r, function (_, a, b, c, d, e, f) {
 				_ && (a == ',' ? (n.each(function (n) { s.push(n) }), n = o.filter()) : (a = m.s[b == ':' ? c : b || a || '']) ?
-					(a = a.call(n, f || c, d, e)) ? (n = n.filter(a)) : (x = 'filter call failed: ' + _) : (x = 'no matching filter found: ' + _))
-				if (x) throw x;
+					(a = a.call(n, f || c, d, e)) ? (n = n.filter(a)) : (x = 'filter call failed: ') : (x = 'no matching filter found: '))
+				if (x) throw x + _
 			})
-			return m(s).filter();
+			return m(s).filter()
 		}
 	/**/}/**events**/,
 	// DOM event binding
 	on: function (t, c) {
 		return this.each(function (n, e, h, a) {
 			h = m[p].trigger
-			n['_' + t] ? n['_' + t].push(c) : (n['_' + t] = [c], n[a = 'addEventListener'] ? n[a](t, h) : n.attachEvent('on' + t, h));
-		});
+			n['_' + t] ? n['_' + t].push(c) : (n['_' + t] = [c], n[a = 'addEventListener'] ? n[a](t, h) : n.attachEvent('on' + t, h))
+		})
 	},
 	// DOM event unbinding
 	off: function (t, c) {
-		return this.each(function (n, e, h, r) {
+		return this.each(function (n, e, h, 
+
+r) {
 			h = m[p].trigger
 			n['_' + t] = c && m[p].filter.call(n['_' + t], function () { return this != c })
 			if (!(n['_' + t] || 0)[l]) n[r = 'removeEventListener'] ? n[r](t, h) : n.detachEvent('on' + t, h)
@@ -108,7 +110,7 @@ m[p] = {
 			for (v in k) this.attr(v, k[v])
 			return this
 		}
-		return k && v !== u ? this.each(function (n) { n.setAttribute(k, v), n[k] = v; }) : this[0] ?
+		return k && v !== u ? this.each(function (n) { n.setAttribute(k, v), n[k] = v }) : this[0] ?
 			this[0][k] || this[0].getAttribute(k) || '' : ''
 	}/**css**/,
 	// get/set CSS attributes
@@ -117,7 +119,7 @@ m[p] = {
 			for (v in k) this.css(v, k[v])
 			return this
 		}
-		return k && v ? this.each(function () { this.style[k] = v; }) : !this[0] ? '' :
+		return k && v ? this.each(function () { this.style[k] = v }) : !this[0] ? '' :
 			this[0][v='currentStyle'] ? this[0][v][k] : window.getComputedStyle(this[0])[k] || this[0].style[k]
 	}/**class**/,
 	// has/add/remove/toggle class names (convenience functions below)
@@ -152,7 +154,7 @@ m[p] = {
 			h = this.responseText
 			t.each(function (n) { n.innerHTML = h })
 		}
-		m.ajax(u.url ? (u.callback = c, u) : { url: u, callback: c });
+		m.ajax(u.url ? (u.callback = c, u) : { url: u, callback: c })
 	}/**/,
 	// this makes most development consoles interpret the output as Array
 	splice: a.splice
@@ -164,10 +166,10 @@ m[p] = {
 // Selector functions: each returns a function that will be used to filter the output (re-use where possible and reasonable)
 m.s = {
 	'[': function (k, c, v, i) {
-		v = c ? eval('/' + (({ '^=': '^', '~=': '(^|\\s)', '=': '^', '!=': '^', '|=': '^' })[c] || '') +
+		v = c ? eval('/' + (c == '|=' || c == '~=' ? '\\b' : '^') +
 			((v || '').replace(/[.+*()]/g, '\\\1') || '.+') +
-			(({ '$=': '$', '=': '$', '!=': '$', '~=': '(\\s|$)', '|=': '(-|$)' })[c] || '') + '/' + i) : /.+/;
-		return function(n){ return !!(v.test(n[k] || n.getAttribute(k)) ^ (c == '!=')) };
+			(c == '|=' ? '(-|$)' : c == '~=' ? '\\b' : '$') + '/' + i) : /.+/;
+		return function(n){ return !!(v.test(n[k] || n.getAttribute(k) || '') ^ (c == '!=')) };
 	},
 	'#': function (n) { return function (t){ return t.id === n } },
 	'.': function (n) { return m.s['[']('className', '~=', n) },
@@ -215,7 +217,7 @@ m.s = {
 	visible: function () { return function (n) { return !!n.offsetWidth*n.offsetHeight } },
 	odd: function() { return m.s['nth-child']('odd') },
 	even: function() { return m.s['nth-child']('even') },
-	eq: function(_, a, b, i) { i|=0; return function(){ return !i-- } },
+	eq: function(i) { i|=0; return function(){ return !i-- } },
 	first: function() { return m.s.eq(0) },
 	last: function() { return m.s.eq(this[l]-1) },
 	seq: function(s) { return s = s.split(','), s[1] = s[1] || this[l], function(n, i){ return i >= s[0] && i <= s[1] } },
@@ -248,7 +250,7 @@ m.ajax = function (o, x) {
 	x = new XMLHttpRequest()
 	x.open(o.method || 'get', o.url, o.callback && (x.onreadystatechange = o.callback), o.user, o.password)/**ajax-init**/
 	o.init && o.init(x)/**ajax-header**/
-	m.each(o.header||[], function(v, k) { x.setRequestHeader(k, v) })/*ajax*/
+	m.each(o.header||[], function(v, k) { x.setRequestHeader(k, v) })/**ajax**/
 	x.send(o.data)
 	return x
 }/**jsonp**/
