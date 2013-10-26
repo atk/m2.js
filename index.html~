@@ -39,14 +39,14 @@ pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 	- DOM queries vs. other functions (handled via "i"nit method)
 	m([DOM query, Array, DOM node, onready callback function], [opt: DOM query base])
 */
-m = function (q, b) { return this instanceof m ? q + '' === q ? m(b || d).find(q) : /^f/.test(typeof q) ? m(d).ready(q/**elementready**/, b/**/) : this.i(q) : new m(q, b) }
+m = function (q, b) { return this instanceof m ? q + '' === q ? m(b || d).find(q) : this.i(q/**elementready**/, b/**/) : new m(q, b) }
 m[p] = {
 	// basic length
 	length: 0,
 	// initialisation for everything but functions or DOM queries
-	i: function (q) { q && a.push.apply(this, q.nodeType ? [q] : q.length ? q : []) },
+	i: function (q/**elementready**/, b/**/) { q && a.push.apply(this, q.nodeType ? [q] : /^f/.test(typeof q) ? m(d).r(q/**elementready**/, b/**/) : q.length ? q : []) },
 	// DOMready
-	ready: function (f/**elementready**/, b/**/) { (function t(){ /**elementready**/(b ? m(b)[l] : /**//c/.test(d.readyState)/**elementready**/)/**/ ? f() : setTimeout(t, 99) })(); return [] },
+	r: function (f/**elementready**/, b/**/) { (function t(){ /**elementready**/(b ? m(b)[l] : /**//c/.test(d.readyState)/**elementready**/)/**/ ? f() : setTimeout(t, 99) })(); return [] },
 	// Iterator
 	each: function (a) { return m.each(this, a) },
 	// Filtering m(...).filter([function returning either true to keep the node or something like an Array to replace it]), otherwise works as unique()
@@ -215,7 +215,7 @@ m.s = {
 	visible: function () { return function (n) { return !!n.offsetWidth*n.offsetHeight } },
 	odd: function() { return m.s['nth-child']('odd') },
 	even: function() { return m.s['nth-child']('even') },
-	eq: function(i) { i|=0; return function(){ return !i-- } },
+	eq: function(_, a, b, i) { i|=0; return function(){ return !i-- } },
 	first: function() { return m.s.eq(0) },
 	last: function() { return m.s.eq(this[l]-1) },
 	seq: function(s) { return s = s.split(','), s[1] = s[1] || this[l], function(n, i){ return i >= s[0] && i <= s[1] } },
@@ -248,7 +248,7 @@ m.ajax = function (o, x) {
 	x = new XMLHttpRequest()
 	x.open(o.method || 'get', o.url, o.callback && (x.onreadystatechange = o.callback), o.user, o.password)/**ajax-init**/
 	o.init && o.init(x)/**ajax-header**/
-	m.each(o.header||[], function(v, k) { x.setRequestHeader(k, v) })/**ajax**/
+	m.each(o.header||[], function(v, k) { x.setRequestHeader(k, v) })/*ajax*/
 	x.send(o.data)
 	return x
 }/**jsonp**/
