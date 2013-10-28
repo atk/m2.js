@@ -123,10 +123,14 @@ r) {
 			this[0][v='currentStyle'] ? this[0][v][k] : window.getComputedStyle(this[0])[k] || this[0].style[k]
 	}/**class**/,
 	// has/add/remove/toggle class names (convenience functions below)
-	cls: function (v, n, t, c, r) {
-		t = this[0],
-		r = t[c = 'className'].replace(eval('/\\b'+n+'\\b/g'), '')
-		return 'has' == v ? r != t[c] : (t[c] = { add: 1, toggle: r == t[c] }[v] ? r + ' ' + n : r, this)
+	cls: function (v, n, h, r) {
+		r = this.each(function (t, c, i, j) {
+			i = t[c = 'className'].replace(eval('/\\b'+n+'\\b/g'), '')
+			j = i != t[c]
+			h = h || j
+			t[c] = i + { add: 1, toggle: !j, has: j }[v] ? ' ' + n : ''
+		})
+		return 'has' == v ? h : r
 	}/**value**/,
 	// get/set value
 	val: function (v) { return '' + v === v ? this.each(function (n) { value = v }) : this[0].value }/**selection**/,
@@ -168,7 +172,7 @@ m.s = {
 	'[': function (k, c, v, i) {
 		v = c ? eval('/' + (c == '|=' || c == '~=' ? '\\b' : '^') +
 			((v || '').replace(/[.+*()]/g, '\\\1') || '.+') +
-			(c == '|=' ? '(-|$)' : c == '~=' ? '\\b' : '$') + '/' + i) : /.+/;
+			(c == '|=' ? '(-|$)' : c == '~=' ? '\\b' : '$') + '/' + i) : /.+/
 		return function(n){ return !!(v.test(n[k] || n.getAttribute(k) || '') ^ (c == '!=')) };
 	},
 	'#': function (n) { return function (t){ return t.id === n } },
@@ -217,7 +221,7 @@ m.s = {
 	visible: function () { return function (n) { return !!n.offsetWidth*n.offsetHeight } },
 	odd: function() { return m.s['nth-child']('odd') },
 	even: function() { return m.s['nth-child']('even') },
-	eq: function(i) { i|=0; return function(){ return !i-- } },
+	eq: function(i) { i |= 0; return function(){ return !i-- } },
 	first: function() { return m.s.eq(0) },
 	last: function() { return m.s.eq(this[l]-1) },
 	seq: function(s) { return s = s.split(','), s[1] = s[1] || this[l], function(n, i){ return i >= s[0] && i <= s[1] } },
@@ -240,6 +244,8 @@ m.each = function (a, b, c, d) {
 		url: '[required: url string]',
 		method: '[optional: get*|post|head]',
 		callback: [optional: function],
+		init: [optional, requires init: function],
+		header: [optional, requires header: function],
 		user: [optional: username string],
 		password: [optional: password string],
 		data: [optional: data string]
@@ -319,7 +325,7 @@ m.ua = function (o, x, i, v) {
 	o.ua.replace(/[\(\)]/g, ';').replace(/\s*(\w*?\ ?\w+[\:\s\;]?[^\d\s]*?)[\/\ ]([\d\.]*)/g, function(f, k, v) { o.info[k] = o.info[k] || v || !0; });
 	z.replace(/(\D+)(\d)/g, function(n, c, d) { 
 		n = +d ? x : 'os'
-		o.info[c] && (o[n] = o[n] || { name: c == 'opr' ? 'opera' : c, version: (+d ? o.info[v] : 0) || o.info[c] },
+		o.info[c] && (o[n] = o[n] || { name: c == 'opr' ? 'opera' : c == 'chrome' && +o.info[v] == 1 ? 'native' : c, version: (+d ? o.info[v] : 0) || o.info[c] },
 			o[n][o[n].name] = parseFloat(o[n][v]) || o[n][v])
 	});
 	(i = /msie\ (\d+).*trident[ \/](\d+)/.exec(o.ua)) && (o[x][v] = +i[2] + 4, o[x].renderMode = +i[1])
@@ -448,6 +454,7 @@ m(function(){
 </script>
 <h2>TODO</h2>
 <ul>
+    <li>Fix .cls multi-node behaviour</li>
 	<li>More/Improved Documentation</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
 	<li>Module for simple selectors to improve speed on simple selections</li>
@@ -664,6 +671,8 @@ m(function(){
 					<li>user (optional): username for HTTP/Auth</li>
 					<li>password (optional): password for HTTP/Auth</li>
 					<li>data (optional): data for POST request</li>
+					<li>init (optional, requires <label for="ajax-init">AJAX init</label>): init callback</li>
+					<li>header (optional, requires <label for="ajax-header">AJAX header</label>): header object</li>
 				</ul>
 				<br/>m(s).load(url), m(s).load(obj) - <label for="ajax-full">Convenience loader</label>; callback not supported.
 			</li>			
