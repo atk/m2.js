@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,7 +9,7 @@
 <style>
 html, body, * { font: 13px sans-serif; }
 h1 { font-size: 250%; font-weight: 400; }
-h2 { font-size: 125%; }
+h2 { font-size: 125%; font-weight: 700; }
 h3 { font-size: 120%; }
 h4 { font-size: 110%; }
 h5 { font-size: 100%; }
@@ -32,21 +33,24 @@ pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 </style>
 <script type="text/javascript">
 // m² 0.0.1 - modular JS micro framework (c) 2013 by Alex Kloss
-!function (p, d, q, g, j, l, a/**cookie**/, c, e/**query-full**/, r/**useragent**/, z/**/, u) {
+!function (d, p/**query-full**/, g/**jsonp**/, j/**/, l, a/**cookie**/, c, e/**query-full**/, r/**/, u) {
 /*
 	Initialisation:
 	- instantiation with "new" if necessary
 	- DOM queries vs. other functions (handled via "i"nit method)
 	m([DOM query, Array, DOM node, onready callback function], [opt: DOM query base])
 */
-m = function (q, b) { return this instanceof m ? q + '' === q ? m(b || d).find(q) : this.i(q/**elementready**/, b/**/) : new m(q, b) }
+m = function (q, b) { return this instanceof m ? '' + q === q ? /**query-performance**/(!b && (b = /^#(\S+)$|^\[name=([^\]]+)\]$|^([a-zA-Z]+)$/.exec(q))) ? this.i(d['getElement' + (b[1] ? 'ById' : b[2] ? 'sByName' : 'sByTagName')](b[1] || b[2] || b[3])) :/**/m(b || d).find(q) : /^f/.test(typeof q) ? m().ready(q/**elementready**/, b/**/) : this.i(q) : new m(q, b) }
 m[p] = {
 	// basic length
 	length: 0,
 	// initialisation for everything but functions or DOM queries
-	i: function (q/**elementready**/, b/**/) { q && a.push.apply(this, q.nodeType ? [q] : /^f/.test(typeof q) ? m(d).r(q/**elementready**/, b/**/) : q.length ? q : []) },
+	i: function (q, x) {
+		x = (q || 0).nodeName ? [q] : [], (q && 1 + q[l]) && m.each(q, function(n){ x.push(n) });
+		a.push.apply(this, x)
+	},
 	// DOMready
-	r: function (f/**elementready**/, b/**/) { (function t(){ /**elementready**/(b ? m(b)[l] : /**//c/.test(d.readyState)/**elementready**/)/**/ ? f() : setTimeout(t, 99) })(); return [] },
+	ready: function (f/**elementready**/, b/**/) { (function t(){ /**elementready**/(b ? m(b)[l] : /**//c/.test(d.readyState)/**elementready**/)/**/ ? f() : setTimeout(t, 99) })() },
 	// Iterator
 	each: function (a) { return m.each(this, a) },
 	// Filtering m(...).filter([function returning either true to keep the node or something like an Array to replace it]), otherwise works as unique()
@@ -61,42 +65,42 @@ m[p] = {
 		return m(r)
 	},
 	// DOM (sub)query
-	find: function (c/**query-full**/, b, s, n, o, x/**/) { /**query-full**/
+	find: function (c/**query-full**/, s, n, o, x/**/) { /**query-full**/
 		try {
-			/**/return this.filter(function (n){ return n[q](c) }) /**query-full**/
+			/**/return this.filter(function (n){ return n.querySelectorAll(c) }) /**query-full**/
 		} catch (e) {
 			s = []
 			o = this
-			n = o.filter()
-			r.lastIndex = 1;
+			n = m(o)
+			r.lastIndex = 0;
 			(' '+c+',').replace(r, function (_, a, b, c, d, e, f) {
-				_ && (a == ',' ? (n.each(function (n) { s.push(n) }), n = o.filter()) : (a = m.s[b == ':' ? c : b || a || '']) ?
-					(a = a.call(n, f || c, d, e)) ? (n = n.filter(a)) : (x = 'filter call failed: ' + _) : (x = 'no matching filter found: ' + _))
-				if (x) throw x;
+				_ && (a == ',' ? (n.each(function (n) { s.push(n) }), n = m(o)) : (a = m.s[b == ':' ? c : b || a || '']) ?
+					(a = a.call(n, f || c, d, e)) ? (n = n.filter(a)) : (x = 'filter call failed: ') : (x = 'no matching filter found: '))
+				if (x) throw x + _
 			})
-			return m(s).filter();
+			return m(s).filter()
 		}
 	/**/}/**events**/,
 	// DOM event binding
 	on: function (t, c) {
-		return this.each(function (n, e, h, a) {
+		return this.each(function (n, h, a) {
 			h = m[p].trigger
-			n['_' + t] ? n['_' + t].push(c) : (n['_' + t] = [c], n[a = 'addEventListener'] ? n[a](t, h) : n.attachEvent('on' + t, h));
-		});
+			n['_' + t] ? n['_' + t].push(c) : (n['_' + t] = [c], n[a = 'addEventListener'] ? n[a](t, h) : n.attachEvent('on' + t, h))
+		})
 	},
 	// DOM event unbinding
 	off: function (t, c) {
-		return this.each(function (n, e, h, r) {
+		return this.each(function (n, h, r) {
 			h = m[p].trigger
 			n['_' + t] = c && m[p].filter.call(n['_' + t], function () { return this != c })
 			if (!(n['_' + t] || 0)[l]) n[r = 'removeEventListener'] ? n[r](t, h) : n.detachEvent('on' + t, h)
 		})
 	},
 	// Event chain trigger
-	trigger: function (t, r, n) {
+	trigger: function (t, r) {
 		t = t || window.event
 		t = t.type ? t : { type: t }
-		t[n='target'] || (t[n] = t.srcElement)
+		t.target || (t.target = t.srcElement)
 		return this instanceof m ? this.each(function(n){ m[p].trigger.call(n, t) }) :
 			(m.each((n = t.srcElement || this)['_'+t.type], function(c){ r = c.call(n, t) === !1 && r }), !r)
 	}/**html**/,
@@ -108,7 +112,7 @@ m[p] = {
 			for (v in k) this.attr(v, k[v])
 			return this
 		}
-		return k && v !== u ? this.each(function (n) { n.setAttribute(k, v), n[k] = v; }) : this[0] ?
+		return k && v !== u ? this.each(function (n) { n.setAttribute(k, v), n[k] = v }) : this[0] ?
 			this[0][k] || this[0].getAttribute(k) || '' : ''
 	}/**css**/,
 	// get/set CSS attributes
@@ -117,14 +121,21 @@ m[p] = {
 			for (v in k) this.css(v, k[v])
 			return this
 		}
-		return k && v ? this.each(function () { this.style[k] = v; }) : !this[0] ? '' :
-			this[0][v='currentStyle'] ? this[0][v][k] : window.getComputedStyle(this[0])[k] || this[0].style[k]
+		return k && v ? this.each(function () { this.style[k] = v }) : this[0] ? this[0][v='currentStyle'] ? this[0][v][k] :
+			window.getComputedStyle(this[0])[k] || this[0].style[k] : ''
 	}/**class**/,
 	// has/add/remove/toggle class names (convenience functions below)
-	cls: function (v, n, t, c, r) {
-		t = this[0],
-		r = t[c = 'className'].replace(eval('/\\b'+n+'\\b/g'), '')
-		return 'has' == v ? r != t[c] : (t[c] = { add: 1, toggle: r == t[c] }[v] ? r + ' ' + n : r, this)
+	cls: function (v, n, h, r, t) {
+		v = v == 'has' ? 0 : v
+		r = eval('/\\b' + n + '\\b/g')
+		t = this.each(function (t, c, i, j) {
+			r.lastIndex = 0
+			i = t[c = 'className'].replace(r, '')
+			j = i != t[c]
+			h = h || j
+			v && (t[c] = i + { add: 1, toggle: !j }[v] ? ' ' + n : '')
+		})
+		return v ? r : h
 	}/**value**/,
 	// get/set value
 	val: function (v) { return '' + v === v ? this.each(function (n) { value = v }) : this[0].value }/**selection**/,
@@ -144,6 +155,12 @@ m[p] = {
 			(n.focus(), o = d[o].createRange(), c = n.createTextRange(), e = c.duplicate(), e.moveToBookmark(o.getBookmark()),
 			e.setEndPoint('EndToStart', c), c = { start: e.text[l], end: e.text[l] + o.text[l] }),
 			c.text = n[v].substr(c.start, (c[l] = c.end - c.start)), c): {}
+	}/**position**/,
+	pos: function () {
+		function o (a, x, y, z) { return a && a[z = 'getBoundingClientRect'] && (a = a[z](), z = document.documentElement) ?
+			{ left: (this.pageXOffset || z.scrollLeft) + a.left, top: (this.pageYOffset || z.scrollTop) + a.top} :
+			a ? o(a.offsetParent, ~~x + ~~a.offsetLeft, ~~y + ~~a.offsetTop) : { left: x, top: y } }
+		return o(this[0])
 	}/**ajax-full**/,
 	// convenient AJAX loading
 	load: function (u, t, c) {
@@ -152,7 +169,7 @@ m[p] = {
 			h = this.responseText
 			t.each(function (n) { n.innerHTML = h })
 		}
-		m.ajax(u.url ? (u.callback = c, u) : { url: u, callback: c });
+		m.ajax(u.url ? (u.callback = c, u) : { url: u, callback: c })
 	}/**/,
 	// this makes most development consoles interpret the output as Array
 	splice: a.splice
@@ -164,37 +181,41 @@ m[p] = {
 // Selector functions: each returns a function that will be used to filter the output (re-use where possible and reasonable)
 m.s = {
 	'[': function (k, c, v, i) {
-		v = c ? eval('/' + (({ '^=': '^', '~=': '(^|\\s)', '=': '^', '!=': '^', '|=': '^' })[c] || '') +
+		v = c ? eval('/' + ({'|=': '\\b', '~=': '\\b', '=': '^', '!=': '^'}[c] || '') +
 			((v || '').replace(/[.+*()]/g, '\\\1') || '.+') +
-			(({ '$=': '$', '=': '$', '!=': '$', '~=': '(\\s|$)', '|=': '(-|$)' })[c] || '') + '/' + i) : /.+/;
-		return function(n){ return !!(v.test(n[k] || n.getAttribute(k)) ^ (c == '!=')) };
+			({'|=': '(-|$)', '~=': '\\b', '=': '$', '!=': '$'}[c] || '') + '/' + (i || '')) : /.+/;
+		return function(n){ return !!(v.test(n[k] || n.getAttribute(k) || '') ^ (c == '!=')) };
 	},
 	'#': function (n) { return function (t){ return t.id === n } },
 	'.': function (n) { return m.s['[']('className', '~=', n) },
 	'': function (n) { return m.s['[']('nodeName', '=', n, 'i') },
 	'*': function () { return function (n) { return n[g] && n[g]('*') } },
-	'>': function () { return function (n, r, c) {
-		for (r = [], n = n.childNodes, c = 0; n[c]; c++) n[c].nodeType == 1 && r.push(n[c]);
+	'>': function () { return function (n, r, i) {
+		for (r = [], n = n.childNodes, i = 0; n[i]; i++) n[i].nodeType == 1 && r.push(n[i]);
 		return r }
 	},
-	'+': function () { return function (n) { for (;n = n.nextSibling;) if (n[c].nodeType == 1) return n } },
+	'+': function () { return function (n) { for (;n = n.nextSibling;) if ((n||0).nodeType == 1) return [n] } },
 	'~': function () { return function (n, r) {
-		for (r = []; n = n.nextSibling; n[c].nodeType == 1 && r.push(n));
+		for (r = []; n = n.nextSibling; n && n.nodeType == 1 && r.push(n));
 		return r }
 	},
 	'nth-of-type': function (c, s, i, n, r) {
-		c = c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c;
-		/(\d+)(n\+(\d*)|)/.test(c) && (i = RegExp.$1, s = RegExp.$3);
+		c = (c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c).split(/n/), i = +c[0], s = c[1];
 		return function (t, c) {
-			for (t = this.parentNode[g](n || this.nodeName), c = r ? t[l] - i + s : i - s; r ? (c -= s >= 0) : (c += s < t[l]);) if (t[c] == this) return !0
+			for (t = m('>' + (n != '*' ? this.nodeName : ''), this.parentNode), c = t[l]; c-- && t[c] !== this;);
+			c = (r ? t[l]-c : c + 1)
+			return !(s ? (c - s) % i : c - i);
 		}
 	},
 	'nth-last-of-type': function (c) { return m.s['nth-of-type'](c, 0, 0, 0, 1) },
 	'nth-child': function (c) { return m.s['nth-of-type'](c, 0, 0, '*') },
 	'nth-last-child': function (c) { return m.s['nth-of-type'](c, 0, 0, '*', 1) },
-	'first-of-type': function (t) { return function(n){ return this.parentNode[g](t || n.nodeName)[0] == n } },
-	'last-of-type': function (t) { return function(n){ return n=this.parentNode[g](t || n.nodeName), n[n[l]-1] == this } },
-	'only-of-type': function (t) { return function(){ return this.parentNode[g](t || this.nodeName)[l] == 1 } },
+	'first-of-type': function (t) { return function(n){ return n.parentNode[g](t || n.nodeName)[0] == n } },
+	'last-of-type': function (t) { return function(n){
+		for (;(n = n.nextSibling||0);) if (n.nodeType == 1 && (t == '*' || (t || n.nodeName) == this.nodeName)) return false;
+		return true;
+	} },
+	'only-of-type': function (t) { return function(n){ return n.parentNode[g](t || n.nodeName)[l] == 1 } },
 	'first-child': function () { return m.s['first-of-type']('*') },
 	'last-child': function () { return m.s['last-of-type']('*') },
 	'only-child': function () { return m.s['only-of-type']('*') },
@@ -213,9 +234,9 @@ m.s = {
 	},
 	hidden: function () { return function (n) { return !n.offsetWidth*n.offsetHeight } },
 	visible: function () { return function (n) { return !!n.offsetWidth*n.offsetHeight } },
-	odd: function() { return m.s['nth-child']('odd') },
-	even: function() { return m.s['nth-child']('even') },
-	eq: function(_, a, b, i) { i|=0; return function(){ return !i-- } },
+	odd: function(i) { return function(){ return (i = !i) } },
+	even: function(i) { return function(){ return !(i = !i) } },
+	eq: function(i) { i |= 0; return function(){ return !i-- } },
 	first: function() { return m.s.eq(0) },
 	last: function() { return m.s.eq(this[l]-1) },
 	seq: function(s) { return s = s.split(','), s[1] = s[1] || this[l], function(n, i){ return i >= s[0] && i <= s[1] } },
@@ -228,9 +249,8 @@ m.s[' '] = m.s['*']
 	if (x) m.s[x] = function() { return m.s['[']('type', '=', x, 'i') }
 });/**/
 // Iterator: m.each([object/array], [callback])
-m.each = function (a, b, c, d) {
-	if (a instanceof Array || a instanceof m) for (c = 0, d = a[l]; c < d; ++c) b.call(a[c], a[c], c, a);
-	else for (c in a) b.call(a[c], a[c], c, a);
+m.each = function (a, b, c) {
+	for (c in a) (a[l] + 1 ? isNaN(c) : !a.hasOwnProperty(c)) || b.call(a[c], a[c], !isNaN(c) ? +c : c, a);
 	return a
 }/**ajax**/
 /* Ajax:
@@ -238,6 +258,8 @@ m.each = function (a, b, c, d) {
 		url: '[required: url string]',
 		method: '[optional: get*|post|head]',
 		callback: [optional: function],
+		init: [optional, requires init: function],
+		header: [optional, requires header: function],
 		user: [optional: username string],
 		password: [optional: password string],
 		data: [optional: data string]
@@ -248,7 +270,7 @@ m.ajax = function (o, x) {
 	x = new XMLHttpRequest()
 	x.open(o.method || 'get', o.url, o.callback && (x.onreadystatechange = o.callback), o.user, o.password)/**ajax-init**/
 	o.init && o.init(x)/**ajax-header**/
-	m.each(o.header||[], function(v, k) { x.setRequestHeader(k, v) })/*ajax*/
+	m.each(o.header||[], function(v, k) { x.setRequestHeader(k, v) })/**ajax**/
 	x.send(o.data)
 	return x
 }/**jsonp**/
@@ -260,7 +282,7 @@ m.ajax = function (o, x) {
 	})
 */
 m.jsonp = function (o, h, s) {
-	h = d[g]('head')[0],
+	h = d.getElementsByTagName('head')[0],
 	s = d.createElement(j),
 	o.callback && (this[o._ = o._ || j + 0 | i++ * new Date()] = function(){
 		h.removeChild(s)
@@ -295,9 +317,10 @@ m[c] = function (o) {
 */
 m.url = function (u, o) {
 	u = (u || location.href).match(/^([^:\/\?#\.]*:?)(\/\/([^\/\?#:]*))?:?(\d*)(\.*\/[^?#]*)(\\?[^#]*)?(#.*)?$/)
-	o = { toString: function () { return '' + o.protocol + (o.host != '' ? '\/\/' : '') + o.host + o.pathname + o.search + o.hash; }, search: { toString: function(r) {
+	o = { toString: function () { return '' + o.protocol + (o.host != '' ? '\/\/' : '') + o.host + o.pathname + o.search + o.hash; }, search: { toString: function(r, t) {
 			r = []
-			m.each(this, function(v, k){ (k || 'toString') != 'toString' && r.push(k + '=' + v) })
+			t = 'toString'
+			m.each(this, function(v, k){ (k || t) != t && r.push(k + '=' + v) })
 			return r.join('&')
 		} } }
 	'href protocol base hostname port pathname search hash'.replace(/\w+/g, function(k, v, r) {
@@ -314,21 +337,20 @@ m.ua = function (o, x, i, v) {
 	o = { ua: navigator.userAgent.toLowerCase(), info: {} }
 	x = 'browser'
 	v = 'version'
-	o.ua.replace(/[\(\)]/g, ';').replace(/\s*(\w*?\ ?\w+[\:\s\;]?[^\d\s]*?)[\/\ ]([\d\.]*)/g, function(f, k, v) { o.info[k] = o.info[k] || v || !0; });
-	z.replace(/(\D+)(\d)/g, function(n, c, d) { 
+	o.ua.replace(/[\(\)]/g, ';').replace(/\s*(\w*?\ ?\w+[\:\s]?[^\d\s;]*?)[\/\ ;](\d[.\w]*|)/g, function(f, k, v) { o.info[k] = o.info[k] || v || !0; });
+	'msie1opr1firefox1seamonkey1aurora1iron1chrome1safari1opera1windows0windows nt0windows phone0windows rt0mac os0android0iphone0ipad0ipod0blackberry0rim0linux0'.replace(/(\D+)(\d)/g, function(n, c, d) {
 		n = +d ? x : 'os'
-		o.info[c] && (o[n] = o[n] || { name: c == 'opr' ? 'opera' : c, version: (+d ? o.info[v] : 0) || o.info[c] },
+		o.info[c] && (o[n] = o[n] || { name: c == 'opr' ? 'opera' : c == 'chrome' && +o.info[v] == 1 ? 'native' : c, version: (+d ? o.info[v] : 0) || o.info[c] },
 			o[n][o[n].name] = parseFloat(o[n][v]) || o[n][v])
 	});
-	(i = /msie\ (\d+).*trident[ \/](\d+)/.exec(o.ua)) && (o[x][v] = +i[2] + 4, o[x].renderMode = +i[1])
+	(i = +o.info.trident + 4) && (o.ua[x].renderMode = o.info[o.ua[x].name = 'msie'], o.ua[x].msie = o.ua[x].version = i);
 	return o
 }()/**/
 }(
-	'prototype',
 	document,
-	'querySelectorAll',
-	'getElementsByTagName',
-	'script',
+	'prototype'/**query-full**/,
+	'getElementsByTagName'/**jsonp**/,
+	'script'/**/,
 	'length',
 	[]/**cookie**/,
 	'cookie',
@@ -342,8 +364,7 @@ m.ua = function (o, x, i, v) {
 		e=attribute value
 		f=pseudo value
 	*/
-	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**useragent**/, 
-	'msie1opr1firefox1seamonkey1arora1iron1chrome1safari1opera1windows0windows nt0mac os0linux0android0iphone0ipad0ipod0blackberry0rim0'/**/
+	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**/
 );
 </script>
 </head>
@@ -351,9 +372,9 @@ m.ua = function (o, x, i, v) {
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework</p>
 <ul>
-<li>1.7kb - 13.47kb commented/uncompressed</li>
-<li>838b - 8.65kb bytes compressed using Google Closure Compiler</li>
-<li>501b - 3.59kb bytes compressed/gzipped using Google Closure Compiler</li>
+<li>1.66kb - 14.26kb commented/uncompressed</li>
+<li>785b - 9.17kb bytes compressed using Google Closure Compiler</li>
+<li>481b - 3.86kb bytes compressed/gzipped using Google Closure Compiler</li>
 </ul>
 <p>&copy; 2013 Alex Kloss.</p>
 <h2>Features</h2>
@@ -364,10 +385,11 @@ m.ua = function (o, x, i, v) {
 			<li>Minimal size</li>
 			<li>Simple usage through chaining</li>
 			<li>jQuery-like syntax</li>
+			<li>Variable Compatibility (depending on size/features)</li>
 			<li>Licensed under GPLv2</li>
 		</ul>
 	</li>
-	<li><a href="#selectors">DOM Selection:</a> <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, additional selectors)</label></li>
+	<li><a href="#selectors">DOM Selection:</a> <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, additional selectors)</label> <label for="query-performance"><input type="checkbox" name="query-performance" id="query-performance" value="on"> More performant (cross-browser-compatible) queries for id, name or tagname</label></li>
 	<li><label for="events"><input type="checkbox" name="events" id="events" value="on"> DOM Events</label> <a href="#domevents">[doc]</a></li>
 	<li><label for="elementready"><input type="checkbox" name="elementready" id="elementready" value="on"> ElementReady</label> <a href="#domevents">[doc]</a></li>
 	<li><label for="html"><input type="checkbox" name="html" id="html" value="on"> HTML inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
@@ -376,6 +398,7 @@ m.ua = function (o, x, i, v) {
 	<li> <a href="#manipulation">ClassName inspection/manipulation:</a> <label for="no-class"><input type="radio" name="class" id="no-class" value="none" checked/> None</label> <label for="class-simple"><input type="radio" name="class" id="class-simple" value="simple"/> Single Method m.cls('has|set|get|toggle', name, value)</label> <label for="class-full"><input type="radio" name="class" id="class-full" value="full"/> With convenience methods</label></li>
 	<li><label for="value"><input type="checkbox" name="value" id="value" value="on"> Form Value inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
 	<li><label for="selection"><input type="checkbox" name="selection" id="selection" value="on"> Selection inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
+	<li><label for="position"><input type="checkbox" name="position" id="position" value="on"> Position</label> <a href="#manipulation">[doc]</a></li>
 	<li><a href="#networking">AJAX:</a> <label for="no-ajax"><input type="radio" name="ajax" id="no-ajax" value="none" checked/> None</label> <label for="ajax-simple"><input type="radio" name="ajax" id="ajax-simple" value="simple"/> Simple</label> <label for="ajax-full"><input type="radio" name="ajax" id="ajax-full" value="full"/> With convenience loader</label> <label for="ajax-init"><input type="checkbox" name="ajax-init" id="ajax-init" value="on"/> Init Callback</label> <label for="ajax-header"><input type="checkbox" name="ajax-header" id="ajax-header" value="on"/> Header Manipulation</label></li>
 	<li><label for="jsonp"><input type="checkbox" name="jsonp" id="jsonp" value="on"> JSONp</label> <a href="#networking">[doc]</a></li>
 	<li><label for="cookie"><input type="checkbox" name="cookie" id="cookie" value="on"> Cookies</label> <a href="#networking">[doc]</a></li>
@@ -388,23 +411,23 @@ m.ua = function (o, x, i, v) {
 <h2>Compiled Code</h2>
 <pre id="livecode">[Code appears here]</pre>
 <script type="text/javascript">
-/* for debugging purposes on ie * /
+/* for debugging purposes on ie */
 m.prototype.toString = function(r){
 	r = [];
-	this.each(function(n, i, t){ 
+	this.each(function(n, i, t){
 		t = '<' + n.nodeName.toLowerCase();
 		'id class type name'.replace(/\w+/g, function(k) { t += m(n).attr(k) ? ' ' + k + '="' + m(n).attr(k) + '"' : '' });
-		r.push((i && (i % 10 == 0) ? '\n' : '') + t + '>');		
+		r.push((i && (i % 10 == 0) ? '\n' : '') + t + '>');
 	})
 	return 'm('+this.length+')[' + r.join(', ') + ']';
 }/**/
-
 m(function(){
 	document.createElement('t');
-	var jsre = /(\B\/(?:\\.|[^\n/*])(?:\\.|[^\n/])*\/[gim]*)|("(?:\\.|\\\r*\n|[^\n"])*"|'(?:\\.|\\\r*\n|[^\n'])*')|(\/\/[^\n]*\n|\/\*[\x00-\xff\u00\uffff]*?\*\/)|\b(abstract|boolean|break|byte|case|catch|char|class|const|continue|debugger|default|delete|do|double|else|enum|export|extends|false|final|finally|float|for|function|goto|if|implements|import|in|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|true|try|typeof|var|void|volatile|while|with)\b|\b(Array|Boolean|Date|Function|Math|Number|Object|RegExp|String|document|window|arguments)\b|(\d[\d\.eE]*)|([\x28-\x2b\x2d\x3a-\x3f\x5b\x5d\x5e\x7b-\x7e]+|\x2f|\.(?=\D))/g, 
-		jshighlight = function(c,r){return c.replace(r,function(f,i){for(i=7;~i*!arguments[i--];);return i?'<t class=f'+i+'>'+f.replace('<','&lt;')+'</t>':''})}, 
+	var jsre = /(\B\/(?:\\.|[^\n/*])(?:\\.|[^\n/])*\/[gim]*)|("(?:\\.|\\\r*\n|[^\n"])*"|'(?:\\.|\\\r*\n|[^\n'])*')|(\/\/[^\n]*\n|\/\*[\x00-\xff\u00\uffff]*?\*\/)|\b(abstract|boolean|break|byte|case|catch|char|class|const|continue|debugger|default|delete|do|double|else|enum|export|extends|false|final|finally|float|for|function|goto|if|implements|import|in|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|true|try|typeof|var|void|volatile|while|with)\b|\b(Array|Boolean|Date|Function|Math|Number|Object|RegExp|String|document|window|arguments)\b|(\d[\d\.eE]*)|([\x28-\x2b\x2d\x3a-\x3f\x5b\x5d\x5e\x7b-\x7e]+|\x2f|\.(?=\D))/g,
+		jshighlight = function(c,r){return c.replace(r,function(f,i){for(i=7;~i*!arguments[i--];);return i?'<t class=f'+i+'>'+f.replace('<','&lt;')+'</t>':''})},
 	jspreparemsie = function(d){return jshighlight(d.replace(/(['"])(.*?)\1/g,function(f,q,s){return q+s.replace(/&/g,'&amp;')+q}),jsre).replace(/\n/g, '<br>').replace(/\t/g, ' &nbsp; &nbsp;')},
 		jsprepare = function(d){return jshighlight(d.replace(/(['"])(.*?)\1/g,function(f,q,s){return q+s.replace(/&/g,'&amp;')+q}),jsre)},
+		toKB = function(b){ return (b/1024).toFixed(2).replace(/0+$/, '') },
 		build = function(s, r){
 			s = '';
 			r = m('script').html().replace(/([^\0]*?)\/\*\*([\w-]*?)\**\//g, function(f, c, n) {
@@ -412,27 +435,27 @@ m(function(){
 				s = n;
 				return f
 			});
-			s = r.length+' bytes commented/uncompressed'
+			s = r.length+' bytes commented/uncompressed' + (r.length > 1024 ? ' (' + toKB(r.length) + 'kb)' : '')
 			m('#devcode').html((m.ua.browser.renderMode || m.ua.browser.msie) < 8 ? jspreparemsie(r) : jsprepare(r))
 			if (m.ua.browser.msie) {
 				r = { compiledCode: '/* CORS Request to Google\'s Closure Compiler REST service not supported by MSIE */' };
 			} else {
 				r = JSON.parse(m.ajax({url: 'http://closure-compiler.appspot.com/compile', method: 'post', header: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, data: 'js_code='+encodeURIComponent(r)+'&compilation_level=ADVANCED_OPTIMIZATIONS&output_format=json&output_info=compiled_code&output_info=statistics'}).responseText)
-				s += ', '+r.statistics.compressedSize+' bytes compressed, ' + r.statistics.compressedGzipSize+' bytes compressed/gzipped'
+				s += ', '+r.statistics.compressedSize+' bytes compressed'+(r.statistics.compressedSize > 1024 ? ' (' + toKB(r.statistics.compressedSize) + 'kb)' : '')+', ' + r.statistics.compressedGzipSize+' bytes compressed/gzipped'+(r.statistics.compressedGzipSize > 1024 ? ' (' + toKB(r.statistics.compressedGzipSize) + 'kb)' : '')
 			}
 			m('#length').html(s)
 			m('#livecode').html((m.ua.browser.renderMode || m.ua.browser.msie) < 8 ? jspreparemsie(r.compiledCode) : jsprepare(r.compiledCode))
 		};
 	m('#build').on('click', build);
 	m('#full').on('click', function(){ m('input').attr('checked', true) });
-	m('#minimal').on('click', function(c){ 
+	m('#minimal').on('click', function(c){
 		m('input:checkbox').attr('checked', false);
 		c = {};
 		m(':radio').each(function(n){ c[n.name] = true; });
 		m.each(c, function(v, n) { (document.getElementsByName(n)[0] || {}).checked = true; })
 	});
 	m('#ajax-init, #ajax-header').on('change', function(){
-		if (m('#ajax-init:checked, #ajax-header:checked').length > 0 && 
+		if (m('#ajax-init:checked, #ajax-header:checked').length > 0 &&
 			m('#ajax-simple:checked, #ajax-full:checked').length == 0) {
 			m('#ajax-simple').attr('checked', true);
 		}
@@ -441,16 +464,17 @@ m(function(){
 		if (this.checked) { m('#ajax-init, #ajax-header').attr('checked', false) }
 	})
 });
-
 //m(function(){console.log('iterator ready')}, '#iterator');
 </script>
 <h2>TODO</h2>
 <ul>
 	<li>More/Improved Documentation</li>
+	<li>Test Suite (WORK IN PROGRESS)</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
-	<li>Module for simple selectors to improve speed on simple selections</li>
 	<li>Additional functionality (as modules)
 		<ul>
+			<li>serialize (as optional part of (.val)?)</li>
+			<li>.live() Events</li>
 			<li>?</li>
 		</ul>
 	</li>
@@ -459,13 +483,12 @@ m(function(){
 			<li>m().sel - IE Fallback (modularity?)</li>
 		</ul>
 	</li>
-	<li>.live() Events</li>
-	<li>Test Suite</li>
 	<li>Cheat Sheet</li>
 </ul>
 <h2>Functionality</h2>
 <style>
 #functionality { margin: 0; padding: 0; }
+#functionality li { font-size: 13px; }
 #functionality label { background: #FFFFFF; border: 1px solid #DDDDDD; cursor: pointer; }
 #selectors, #domevents, #manipulation, #iterator, #networking, #client { display: block; margin: 0; padding: 0 1em 1em; overflow: hidden;  }
 #selectors { background: #FFFFCC; }
@@ -569,7 +592,7 @@ m(function(){
 		<h3>m(s).attr|css|html|cls|val - Manipulation/Inspection</h3>
 		<ul>
 			<li>
-				<h4><label for="attr">m(s).attr - DOM Attributes</label></h4>				
+				<h4><label for="attr">m(s).attr - DOM Attributes</label></h4>
 				<ul>
 					<li>m(s).attr('name')</li>
 					<li>m(s).attr('name', value)</li>
@@ -577,7 +600,7 @@ m(function(){
 				</ul>
 			</li>
 			<li>
-				<h4><label for="css">m(s).css - CSS Attributes</label></h4>				
+				<h4><label for="css">m(s).css - CSS Attributes</label></h4>
 				<ul>
 					<li>m(s).css('name')</li>
 					<li>m(s).css('name', value)</li>
@@ -585,14 +608,14 @@ m(function(){
 				</ul>
 			</li>
 			<li>
-				<h4><label for="html">m(s).html - HTML Content</label></h4>				
+				<h4><label for="html">m(s).html - HTML Content</label></h4>
 				<ul>
 					<li>m(s).html()</li>
 					<li>m(s).html('&lt;html code&gt;')</li>
 				</ul>
 			</li>
 			<li>
-				<h4><label for="class-simple">m(s).cls - ClassName</label></h4>				
+				<h4><label for="class-simple">m(s).cls - ClassName</label></h4>
 				<ul>
 					<li>m(s).cls('has|set|remove|toggle', 'name', 'opt:value')</li>
 					<li>m(s).hasClass('name')**</li>
@@ -625,7 +648,7 @@ m(function(){
 				<input type="text" id="selectiontest" />
 				<span id="selectionview"></span>
 				<script type="text/javascript">
-				(function(s){					
+				(function(s){
 					m('#selectiontest').on('mousedown', function(e) { s = 1 }).on('mouseup', function () { s = 0 }).on('mousemove', function(e) {
 						if (!s) return;
 						e = m('#selectiontest').sel()
@@ -636,6 +659,15 @@ m(function(){
 					})
 				})()
 				</script>
+			</li>
+			<li><h4><label for="position">m(s).pos() - Position</label></h4>
+				<p>m(s).pos() // returns position object</p>
+				<h5>Position Object</h5>
+				<ul>
+					<li>.left - horizontal position in pixels</li>
+					<li>.top - vertical position in pixels</li>
+				</ul>
+				<p>Position coordinates may be floating point numbers</p>
 			</li>
 		</ul>
 	</li>
@@ -662,9 +694,11 @@ m(function(){
 					<li>user (optional): username for HTTP/Auth</li>
 					<li>password (optional): password for HTTP/Auth</li>
 					<li>data (optional): data for POST request</li>
+					<li>init (optional, requires <label for="ajax-init">AJAX init</label>): init callback</li>
+					<li>header (optional, requires <label for="ajax-header">AJAX header</label>): header object</li>
 				</ul>
 				<br/>m(s).load(url), m(s).load(obj) - <label for="ajax-full">Convenience loader</label>; callback not supported.
-			</li>			
+			</li>
 			<li>
 				<h4><label for="jsonp">m.jsonp(o)</label></h4>
 				m.jsonp({configuration object}) - yields script tag for JSONp-Request
@@ -679,7 +713,7 @@ m(function(){
 				<h4><label for="cookies">m.cookie(o)</label></h4>
 				m.cookie(name) - returns cookie value<br/>
 				m.cookie({cookie object})
-				<h5>Cookie Object</h5>				
+				<h5>Cookie Object</h5>
 				<ul>
 					<li>name (required): Cookie name</li>
 					<li>value (required): Cookie value</li>
@@ -716,7 +750,7 @@ m(function(){
 				<ul>
 					<li>name: <script type="text/javascript">document.write(m.ua.os.name);</script></li>
 					<li>version: <script type="text/javascript">document.write(m.ua.os.version);</script></li>
-					<li><script type="text/javascript">document.write(m.ua.os.name);</script>: <script type="text/javascript">document.write(m.ua.os[m.ua.os.name]);</script></li>					
+					<li><script type="text/javascript">document.write(m.ua.os.name);</script>: <script type="text/javascript">document.write(m.ua.os[m.ua.os.name]);</script></li>
 				</ul>
 			</li>
 			<li>info: Hash aller weiteren UA-Eigenschaften (key=value oder key=true)</li>
@@ -724,5 +758,476 @@ m(function(){
 		</ul>
 	</li>
 </ul>
+<h2>Tests</h2>
+<style>
+#testresults p { margin: 0; padding: 0; }
+</style>
+<div id="testresults"></div>
+<button id="run">Run</button>
+<script type="text/javascript">
+(function(){
+	var assert = function(assertion, result, msg) {
+		msg = msg || [];
+		if (typeof assertion !== typeof result) msg.push('types differ: '+typeof assertion+' vs. '+typeof result);
+		else if (assertion instanceof Array || assertion instanceof m || (typeof assertion == 'object' && !assertion.nodeName)) {
+			m.each(assertion, function(v, k){ assert(v, result[k], msg) });
+		} else if (assertion != result) msg.push('different result');
+		return msg.length ? msg : true
+	},
+	testfilter = function(filter, html) {
+		var div = document.createElement('div');
+		div.innerHTML = html;
+		return m.prototype.filter.call(m(div.getElementsByTagName('*')), filter)
+	},
+	tests = [
+		{
+			description: '<h3>Iterator tests</h3>'
+		},
+		{
+			description: 'array iterator',
+			run: function(r, c){
+				c = [1,2,3],
+				r = '';
+				m.each(c, function(n, i){
+					if (!n) r += ' ERROR: empty/false element';
+					if (n != this) r += ' ERROR: this/arg[0] differ';
+					if (!(i in c)) r += ' ERROR: wrong index';
+					if (+n !== n || n < 0 || n > 3) r += ' ERROR: element outside array';
+					if (i + 1 != n) r += ' ERROR: element/index mismatch: '+i+'&rarr;'+n;
+				}) == c || (r += ' ERROR: wrong/missing return value');
+				return r || true;
+			}
+		},
+		{
+			description: 'object iterator',
+			run: function(r, c){
+				c = { a: 1, b: 2, c: 3 },
+				r = '';
+				m.each(c, function(n, i){
+					if (!n) r += ' ERROR: empty/false element';
+					if (n != this) r += ' ERROR: this/arg[0] differ';
+					if (!(i in c) || !/[abc]/.test(i)) r += ' ERROR: wrong index';
+					if (+n !== n || n < 0 || n > 3) r += ' ERROR: element outside object';
+					if (parseInt(i, 36) - 9 != n) r += ' ERROR: element/index mismatch';
+				}) == c || (r += ' ERROR: wrong/missing return value');
+				return r || true;
+			}
+		},
+		{
+			description: '<h3>Selector filter tests</h3>'
+		},
+		{
+			description: 'tagname filter',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['']('li'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'id filter',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['#']('test'), '<span><\/span><div id="test"><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'class name filter',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['.']('test'), '<span><\/span><div class="test"><\/div><ul><li class="test"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'recursive child filter',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['*'](), '<div><span><\/span><div class="test"><\/div><ul><li class="test"><\/li><\/ul><a><\/a><img/></div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 6) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[4] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				if (((n[5] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'direct child filter',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['>'](), '<span><\/span><div class="test"><\/div><ul><li class="test"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'sibling filter',
+			run: function(res, n){
+				res = '';
+				n = testfilter(m.s['~'](), '<span><\/span><div class="test"><\/div><ul><li class="test"><\/li><\/ul><a><\/a><img/>');
+				if (!n) res += ' ERROR: empty result';
+				if (n.length != 4) res += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') res += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'ul') res += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'a') res += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'img') res += ' ERROR: wrong element matched'
+				return res || true
+			}
+		},
+		{
+			description: 'next filter',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['+'](), '<span><div class="test"><\/div><ul><li class="test"><\/li><\/ul><a><\/a><img/><\/span>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'multiple selectors',
+			run: function(r, n) {
+				r = '';
+				n = m('#build, #full, #minimal');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if ((n[0] || 0).id != 'build') r += ' ERROR: wrong element matched'
+				if ((n[1] || 0).id != 'full') r += ' ERROR: wrong element matched'
+				if ((n[2] || 0).id != 'minimal') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'attribute filter (without comparison)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['[']('data-test', '', ''), '<span><\/span><div><\/div><ul><li data-test="present"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'attribute filter (equal comparison)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['[']('data-test', '=', 'present'), '<span><\/span><div data-test="not present"><\/div><ul><li data-test="present"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'attribute filter (unequal comparison)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['[']('data-test', '!=', 'not present'), '<span><\/span><div data-test="not present"><\/div><ul><li data-test="present"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 5) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				if (((n[4] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'attribute filter (start comparison)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['[']('data-test', '^=', 'not'), '<span data-test="not filled"><\/span><div data-test="not present"><\/div><ul><li data-test="present"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'attribute filter (end comparison)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['[']('data-test', '$=', 'present'), '<span data-test="not filled"><\/span><div data-test="not present"><\/div><ul><li data-test="present"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'attribute filter (part comparison)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['[']('data-test', '*=', 'pre'), '<span data-test="not prefilled"><\/span><div data-test="not present"><\/div><ul><li data-test="present"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'attribute filter (subpart comparison)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['[']('data-test', '~=', 'not'), '<span data-test="still not prefilled"><\/span><div data-test="not present"><\/div><ul><li data-test="present"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: 'attribute filter (subpart before "-" comparison)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['[']('data-test', '|=', 'de'), '<span data-test="de-DE en-EN"><\/span><div data-test="not present"><\/div><ul><li data-test="present"><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: '<h3>pseudo attribute filter</h3>'
+		},
+		{
+			description: ':first',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['first'](), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':last',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['last'].call({length: 6}), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':first-child',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['first-child'](), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':last-child',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['last-child'](), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':only-child',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['only-child'](), '<span><\/span><div><p><\/p><p><\/p><\/div><ul><li><\/li><\/ul><a><img/><\/a>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':odd',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['odd'](), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':even',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['even'](), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':empty',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['empty'](), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 5) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				if (((n[4] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':lang()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['lang']('de'), '<span lang="de-DE"><\/span><div lang="de-AT"><\/div><ul><li lang="en-EN"><\/li><\/ul><a lang="de"><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':eq()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['eq'](1), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-child() (1/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-child']('3'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-child() (2/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-child']('3n+1'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-child() (3/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-child']('4n-1'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-last-child() (1/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-child']('2'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-last-child() (2/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-child']('3n+1'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-last-child() (3/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-child']('4n-2'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		}
+	];
+	m('#run').on('click', function(){
+		m.each(tests, function(test, div, result){
+			div = document.createElement('div');
+			if (test.requires && !test.requires()) {
+				div.innerHTML = '<p>Requirements not met.</p>'
+			} else if (test.run) {
+				try { result = test.run() } catch (e){ result = ''+e }
+				result = result === true ? 'OK' : result
+				div.innerHTML = '<p>' + test.description + ': ' + result + '<\/p>';
+			} else {
+				div.innerHTML = test.description;
+			}
+			m('#testresults')[0].appendChild(div);
+		});
+		m('#run')[0].parentNode.removeChild(m('#run')[0])
+	});
+})()
+</script>
 </body>
 </html>
