@@ -9,7 +9,7 @@
 <style>
 html, body, * { font: 13px sans-serif; }
 h1 { font-size: 250%; font-weight: 400; }
-h2 { font-size: 125%; }
+h2 { font-size: 125%; font-weight: 700; }
 h3 { font-size: 120%; }
 h4 { font-size: 110%; }
 h5 { font-size: 100%; }
@@ -33,14 +33,14 @@ pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 </style>
 <script type="text/javascript">
 // m² 0.0.1 - modular JS micro framework (c) 2013 by Alex Kloss
-!function (d, p/**query-full**/, g/**jsonp**/, j/**/, l, a/**cookie**/, c, e/**query-full**/, r/**useragent**/, z/**/, u) {
+!function (d, p/**query-full**/, g/**jsonp**/, j/**/, l, a/**cookie**/, c, e/**query-full**/, r/**/, u) {
 /*
 	Initialisation:
 	- instantiation with "new" if necessary
 	- DOM queries vs. other functions (handled via "i"nit method)
 	m([DOM query, Array, DOM node, onready callback function], [opt: DOM query base])
 */
-m = function (q, b) { return this instanceof m ? '' + q === q ? m(b || d).find(q) : /^f/.test(typeof q) ? m().ready(q/**elementready**/, b/**/) : this.i(q) : new m(q, b) }
+m = function (q, b) { return this instanceof m ? '' + q === q ? /**query-performance**/(!b && (b = /^#(\S+)$|^\[name=([^\]]+)\]$|^([a-zA-Z]+)$/.exec(q))) ? this.i(d['getElement' + (b[1] ? 'ById' : b[2] ? 'sByName' : 'sByTagName')](b[1] || b[2] || b[3])) :/**/m(b || d).find(q) : /^f/.test(typeof q) ? m().ready(q/**elementready**/, b/**/) : this.i(q) : new m(q, b) }
 m[p] = {
 	// basic length
 	length: 0,
@@ -200,11 +200,11 @@ m.s = {
 		return r }
 	},
 	'nth-of-type': function (c, s, i, n, r) {
-		c = c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c;
-		/(\d+)(n\+(\d*)|)/.test(c) && (i = RegExp.$1, s = RegExp.$3);
+		c = (c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c).split(/n/), i = +c[0], s = c[1];
 		return function (t, c) {
-			for (t = this.parentNode[g](n || this.nodeName), c = r ? t[l] - i + s : i - s;
-				r ? ((c -= s) >= 0) : ((c += s) < t[l]);) if (t[c] == this) return !0
+			for (t = m('>' + (n != '*' ? this.nodeName : ''), this.parentNode), c = t[l]; c-- && t[c] !== this;);
+			c = (r ? t[l]-c : c + 1)
+			return !(s ? (c - s) % i : c - i);
 		}
 	},
 	'nth-last-of-type': function (c) { return m.s['nth-of-type'](c, 0, 0, 0, 1) },
@@ -338,12 +338,12 @@ m.ua = function (o, x, i, v) {
 	x = 'browser'
 	v = 'version'
 	o.ua.replace(/[\(\)]/g, ';').replace(/\s*(\w*?\ ?\w+[\:\s]?[^\d\s;]*?)[\/\ ;](\d[.\w]*|)/g, function(f, k, v) { o.info[k] = o.info[k] || v || !0; });
-	z.replace(/(\D+)(\d)/g, function(n, c, d) {
+	'msie1opr1firefox1seamonkey1aurora1iron1chrome1safari1opera1windows0windows nt0windows phone0windows rt0mac os0android0iphone0ipad0ipod0blackberry0rim0linux0'.replace(/(\D+)(\d)/g, function(n, c, d) {
 		n = +d ? x : 'os'
 		o.info[c] && (o[n] = o[n] || { name: c == 'opr' ? 'opera' : c == 'chrome' && +o.info[v] == 1 ? 'native' : c, version: (+d ? o.info[v] : 0) || o.info[c] },
 			o[n][o[n].name] = parseFloat(o[n][v]) || o[n][v])
 	});
-	(i = /msie\ (\d+).*trident[ \/](\d+)/.exec(o.ua)) && (o[x][v] = +i[2] + 4, o[x].renderMode = +i[1])
+	(i = +o.info.trident + 4) && (o.ua[x].renderMode = o.info[o.ua[x].name = 'msie'], o.ua[x].msie = o.ua[x].version = i);
 	return o
 }()/**/
 }(
@@ -364,8 +364,7 @@ m.ua = function (o, x, i, v) {
 		e=attribute value
 		f=pseudo value
 	*/
-	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**useragent**/,
-	'msie1opr1firefox1seamonkey1aurora1iron1chrome1safari1opera1windows0windows nt0windows phone0mac os0android0iphone0ipad0ipod0blackberry0rim0linux0'/**/
+	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**/
 );
 </script>
 </head>
@@ -373,9 +372,9 @@ m.ua = function (o, x, i, v) {
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework</p>
 <ul>
-<li>1.66kb - 14.08kb commented/uncompressed</li>
-<li>785b - 9.02kb bytes compressed using Google Closure Compiler</li>
-<li>481b - 3.77kb bytes compressed/gzipped using Google Closure Compiler</li>
+<li>1.66kb - 14.26kb commented/uncompressed</li>
+<li>785b - 9.17kb bytes compressed using Google Closure Compiler</li>
+<li>481b - 3.86kb bytes compressed/gzipped using Google Closure Compiler</li>
 </ul>
 <p>&copy; 2013 Alex Kloss.</p>
 <h2>Features</h2>
@@ -386,10 +385,11 @@ m.ua = function (o, x, i, v) {
 			<li>Minimal size</li>
 			<li>Simple usage through chaining</li>
 			<li>jQuery-like syntax</li>
+			<li>Variable Compatibility (depending on size/features)</li>
 			<li>Licensed under GPLv2</li>
 		</ul>
 	</li>
-	<li><a href="#selectors">DOM Selection:</a> <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, additional selectors)</label></li>
+	<li><a href="#selectors">DOM Selection:</a> <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, additional selectors)</label> <label for="query-performance"><input type="checkbox" name="query-performance" id="query-performance" value="on"> More performant (cross-browser-compatible) queries for id, name or tagname</label></li>
 	<li><label for="events"><input type="checkbox" name="events" id="events" value="on"> DOM Events</label> <a href="#domevents">[doc]</a></li>
 	<li><label for="elementready"><input type="checkbox" name="elementready" id="elementready" value="on"> ElementReady</label> <a href="#domevents">[doc]</a></li>
 	<li><label for="html"><input type="checkbox" name="html" id="html" value="on"> HTML inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
@@ -471,7 +471,6 @@ m(function(){
 	<li>More/Improved Documentation</li>
 	<li>Test Suite (WORK IN PROGRESS)</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
-	<li>Module for simple selectors to improve speed on simple selections id|tag|name|(class)?</li>
 	<li>Additional functionality (as modules)
 		<ul>
 			<li>serialize (as optional part of (.val)?)</li>
@@ -1099,6 +1098,115 @@ m(function(){
 				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
 				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
 				if (((n[2] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':empty',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['empty'](), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 5) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				if (((n[4] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':lang()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['lang']('de'), '<span lang="de-DE"><\/span><div lang="de-AT"><\/div><ul><li lang="en-EN"><\/li><\/ul><a lang="de"><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':eq()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['eq'](1), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-child() (1/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-child']('3'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-child() (2/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-child']('3n+1'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-child() (3/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-child']('4n-1'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-last-child() (1/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-child']('2'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-last-child() (2/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-child']('3n+1'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-last-child() (3/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-child']('4n-2'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
 				return r || true
 			}
 		}
