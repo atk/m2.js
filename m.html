@@ -200,10 +200,9 @@ m.s = {
 		return r }
 	},
 	'nth-of-type': function (c, s, i, n, r) {
-		c = (c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c).split(/n/), i = +c[0], s = c[1];
+		c = (c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c).split(/n/), i = +c[0], s = c[1], r = r ? 'nextSibling' : 'previousSibling';
 		return function (t, c) {
-			for (t = m('>' + (n != '*' ? this.nodeName : ''), this.parentNode), c = t[l]; c-- && t[c] !== this;);
-			c = (r ? t[l]-c : c + 1)
+			for (t=this, c=1; t=t[r]; t.nodeType == 1 && (n == '*' || t.nodeName == this.nodeName) && c++);
 			return !(s ? (c - s) % i : c - i);
 		}
 	},
@@ -372,9 +371,9 @@ m.ua = function (o, x, i, v) {
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework</p>
 <ul>
-<li>1.66kb - 14.26kb commented/uncompressed</li>
-<li>785b - 9.17kb bytes compressed using Google Closure Compiler</li>
-<li>481b - 3.86kb bytes compressed/gzipped using Google Closure Compiler</li>
+<li>1.66kb - 14.28kb commented/uncompressed</li>
+<li>785b - 9.19kb bytes compressed using Google Closure Compiler</li>
+<li>481b - 3.85kb bytes compressed/gzipped using Google Closure Compiler</li>
 </ul>
 <p>&copy; 2013 Alex Kloss.</p>
 <h2>Features</h2>
@@ -475,6 +474,7 @@ m(function(){
 		<ul>
 			<li>serialize (as optional part of (.val)?)</li>
 			<li>.live() Events</li>
+			<li>.post() requests</li>
 			<li>?</li>
 		</ul>
 	</li>
