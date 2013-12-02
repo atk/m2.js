@@ -113,7 +113,7 @@ m[p] = {
 			return this
 		}
 		return k && v !== u ? this.each(function (n) { n.setAttribute(k, v), n[k] = v }) : this[0] ?
-			this[0][k] || this[0].getAttribute(k) || '' : ''
+			this[0][k] || (this[0].getAttribute && this[0].getAttribute(k)) || '' : ''
 	}/**css**/,
 	// get/set CSS attributes
 	css: function(k, v){
@@ -184,7 +184,7 @@ m.s = {
 		v = c ? eval('/' + ({'|=': '\\b', '~=': '\\b', '=': '^', '!=': '^'}[c] || '') +
 			((v || '').replace(/[.+*()]/g, '\\\1') || '.+') +
 			({'|=': '(-|$)', '~=': '\\b', '=': '$', '!=': '$'}[c] || '') + '/' + (i || '')) : /.+/;
-		return function(n){ return !!(v.test(n[k] || n.getAttribute(k) || '') ^ (c == '!=')) };
+		return function(n){ return !!(v.test(n[k] || (typeof n.getAttribute == 'function' && n.getAttribute(k)) || '') ^ (c == '!=')) };
 	},
 	'#': function (n) { return function (t){ return t.id === n } },
 	'.': function (n) { return m.s['[']('className', '~=', n) },
@@ -209,17 +209,17 @@ m.s = {
 	'nth-last-of-type': function (c) { return m.s['nth-of-type'](c, 0, 0, 0, 1) },
 	'nth-child': function (c) { return m.s['nth-of-type'](c, 0, 0, '*') },
 	'nth-last-child': function (c) { return m.s['nth-of-type'](c, 0, 0, '*', 1) },
-	'first-of-type': function (t) { return function(n){ return n.parentNode[g](t || n.nodeName)[0] == n } },
+	'first-of-type': function (t) { return function(n){ return n.parentNode[g](t == '*' ? t : n.nodeName)[0] == n } },
 	'last-of-type': function (t) { return function(n){
-		for (;(n = n.nextSibling||0);) if (n.nodeType == 1 && (t == '*' || (t || n.nodeName) == this.nodeName)) return false;
+		for (;(n = n.nextSibling||0);) if (n.nodeType == 1 && (t == '*' || (n.nodeName == this.nodeName))) return false;
 		return true;
 	} },
-	'only-of-type': function (t) { return function(n){ return n.parentNode[g](t || n.nodeName)[l] == 1 } },
+	'only-of-type': function (t) { return function(n){ return n.parentNode[g](t == '*' ? t : n.nodeName)[l] == 1 } },
 	'first-child': function () { return m.s['first-of-type']('*') },
 	'last-child': function () { return m.s['last-of-type']('*') },
 	'only-child': function () { return m.s['only-of-type']('*') },
 	empty: function () { return function (n) { return !n.childNodes[l] } },
-	target: function (t) { return this['[']('id', '=', /^#(.+)$/.test(location.search) ? RegExp.$1 : '#') },
+	target: function (t) { return this['[']('id', '=', /^#(.+)$/.test(location.hash) ? RegExp.$1 : '#') },
 	lang: function (c) { return this['[']('lang', '|=', c, 'i') },
 	enabled: function () { return function (n) { return !n.disabled } },
 	disabled: function () { return function (n) { return !!n.disabled } },
@@ -238,14 +238,14 @@ m.s = {
 	eq: function(i) { i |= 0; return function(){ return !i-- } },
 	first: function() { return m.s.eq(0) },
 	last: function() { return m.s.eq(this[l]-1) },
-	seq: function(s) { return s = s.split(','), s[1] = s[1] || this[l], function(n, i){ return i >= s[0] && i <= s[1] } },
+	seq: function(s) { s = s.split(','); return function(n, i){ return i >= s[0] && (isNaN(s[1]) || i < s[1]) } },
 	gt: function(i) { return m.s.seq(''+i) },
 	lt: function(i) { return m.s.seq('0,'+i) }
 }
 // extra selectors
 m.s[' '] = m.s['*']
 'checkbox file image password radio reset submit text'.replace(/\w+/g, function (x) {
-	if (x) m.s[x] = function() { return m.s['[']('type', '=', x, 'i') }
+	if (x) m.s[x] = function(){ return function(n) { return (n.type || '').toLowerCase() == x }}
 });/**/
 // Iterator: m.each([object/array], [callback])
 m.each = function (a, b, c) {
@@ -449,9 +449,7 @@ m(function(){
 	m('#full').on('click', function(){ m('input').attr('checked', true) });
 	m('#minimal').on('click', function(c){
 		m('input:checkbox').attr('checked', false);
-		c = {};
-		m(':radio').each(function(n){ c[n.name] = true; });
-		m.each(c, function(v, n) { (document.getElementsByName(n)[0] || {}).checked = true; })
+		m('label:first-of-type :radio').attr('checked', true);
 	});
 	m('#ajax-init, #ajax-header').on('change', function(){
 		if (m('#ajax-init:checked, #ajax-header:checked').length > 0 &&
@@ -1018,6 +1016,17 @@ m(function(){
 			description: '<h3>pseudo attribute filter</h3>'
 		},
 		{
+			description: ':root',
+			run: function(r, n){
+				r = '';
+				n = m([document, document.documentElement, document.body]).filter(m.s.root())
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (n[0] != document.documentElement) r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
 			description: ':first',
 			run: function(r, n){
 				r = '';
@@ -1209,6 +1218,247 @@ m(function(){
 				if (((n[0] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
 				return r || true
 			}
+		},
+		{
+			description: ':nth-of-type() (1/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-of-type']('2'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'					
+				return r || true
+			}
+		},
+		{
+			description: ':nth-of-type() (2/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-of-type']('3n+2'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-of-type() (3/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-of-type']('4n-1'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-last-of-type() (1/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-of-type']('2'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'					
+				return r || true
+			}
+		},
+		{
+			description: ':nth-of-type() (2/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-of-type']('3n+2'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':nth-of-type() (3/3)',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['nth-last-of-type']('4n-1'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':only-of-type()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['only-of-type'](), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'a') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'img') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':first-of-type()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['first-of-type'](), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 4) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':last-of-type()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['last-of-type'](), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 4) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':seq()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['seq']("2,5"), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':gt()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['gt']("6"), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':lt()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['lt']("3"), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':target()',
+			run: function(r, n){
+				r = '';
+				location.hash = 'test';
+				n = testfilter(m.s['target'](), '<span><\/span><span><\/span><span><\/span><div id="test"><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':enabled()',
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['enabled'](), '<input name="i1" type="submit" disabled="disabled" /><input type="text" disabled name="i2" value=""/><input name="i3"/><select name)"s1" disabled><\/select><input name="i4" />');
+				console.log(n);
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: ':disabled()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':checked()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':not()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':has()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':contains()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':hidden()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':visible()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':checkbox()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':file()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':image()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':password()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':radio()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':reset()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':submit()',
+			run: function(){ return 'TODO' }
+		},
+		{
+			description: ':text()',
+			run: function(){ return 'TODO' }
 		}
 	];
 	m('#run').on('click', function(){
