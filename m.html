@@ -69,13 +69,10 @@ m[p] = {
 		try {
 			/**/return this.filter(function (n){ return n.querySelectorAll(c) }) /**query-full**/
 		} catch (e) {
-			s = []
-			o = this
-			n = m(o)
-			r.lastIndex = 0;
+			s = [], o = this, n = m(o), r.lastIndex = 0;
 			(' '+c+',').replace(r, function (_, a, b, c, d, e, f) {
 				_ && (a == ',' ? (n.each(function (n) { s.push(n) }), n = m(o)) : (a = m.s[b == ':' ? c : b || a || '']) ?
-					(a = a.call(n, f || c, d, e)) ? (n = n.filter(a)) : (x = 'filter call failed: ') : (x = 'no matching filter found: '))
+					(a = a.call(n, f || c, d, e, o)) ? (n = n.filter(a)) : (x = 'filter call failed: ') : (x = 'no matching filter found: '))
 				if (x) throw x + _
 			})
 			return m(s).filter()
@@ -221,18 +218,19 @@ m.s = {
 	empty: function () { return function (n) { return !n.childNodes[l] } },
 	target: function (t) { return this['[']('id', '=', /^#(.+)$/.test(location.hash) ? RegExp.$1 : '#') },
 	lang: function (c) { return this['[']('lang', '|=', c, 'i') },
-	enabled: function () { return function (n) { return !n.disabled } },
+	enabled: function () { return function (n) { return n.disabled === !1 } },
 	disabled: function () { return function (n) { return !!n.disabled } },
 	checked: function () { return function (n) { return !!n.checked } },
-	not: function (n) { return n = m(n), function (i) { for (i = 0; n[i];) if (n[i++] == this) return !1; return !0 } },
+	not: function (n, a, b, c, d) { return n = m(n, d), function (i) { for (i = 0; n[i];) if (n[i++] == this) return !1; return !0 } },
 	root: function() { return function(n){ return n == d.documentElement } },
 	has: function(q) { return function(n){ return m(n).find(q)[l] > 0 } },
 	contains: function (c, t, r) {
 		t = function(n, r){ return n ? (n.nodeType == 3 && r.push(n.data), t(n.firstChild, r), t(n.nextSibling, r)) : r }
-		return function(n) { return !!~t(n, r = []).join('').indexOf(c) }
+		return function(n) { return t(n.firstChild, r = []).join('').indexOf(c)>-1 }
 	},
-	hidden: function () { return function (n) { return !n.offsetWidth*n.offsetHeight } },
-	visible: function () { return function (n) { return !!n.offsetWidth*n.offsetHeight } },
+	hidden: function (v) {return function (n, s) { return !!(!v ^ !(n.offsetWidth * n.offsetHeight || 
+		((s = n.currentStyle || { visibility: 0, display: 0 }).visibility == 'hidden' || s.display == 'none'))) } },
+	visible: function () { return m.s.hidden() },
 	odd: function(i) { return function(){ return (i = !i) } },
 	even: function(i) { return function(){ return !(i = !i) } },
 	eq: function(i) { i |= 0; return function(){ return !i-- } },
@@ -311,7 +309,8 @@ m[c] = function (o) {
 		(o.domain ? ('; domain=' + o.domain) : '') +
 		(o.path ? '; path=' + o.path : '') +
 		(o.extra || '') + ';')
-}/**url**//*
+}/**url**/
+/*
 	m.url('url-string') // -> URL-object (similar to location, but o.search[key] yields value, though o.search+'' yields the full string
 */
 m.url = function (u, o) {
@@ -466,7 +465,7 @@ m(function(){
 <h2>TODO</h2>
 <ul>
 	<li>More/Improved Documentation</li>
-	<li>Test Suite (WORK IN PROGRESS)</li>
+	<li>Test Suite for events, elementready, html, attr, css, val, pos, jsonp, cookies, url</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
 	<li>Additional functionality (as modules)
 		<ul>
@@ -772,10 +771,16 @@ m(function(){
 		} else if (assertion != result) msg.push('different result');
 		return msg.length ? msg : true
 	},
-	testfilter = function(filter, html) {
-		var div = document.createElement('div');
-		div.innerHTML = html;
-		return m.prototype.filter.call(m(div.getElementsByTagName('*')), filter)
+	testfilter = function(filter, obj, args) {
+		if (typeof obj == 'string') {
+			var div = document.createElement('div');
+			div.innerHTML = obj;
+			if (args) args[4] = div, filter = filter.apply(m.s, args);
+			obj = m(div.getElementsByTagName('*'))
+		} else {
+			if (args) args[4] = obj, filter = filter.apply(m.s, args);
+		}
+		return m.prototype.filter.call(obj, filter);
 	},
 	tests = [
 		{
@@ -1391,8 +1396,7 @@ m(function(){
 			description: ':enabled()',
 			run: function(r, n){
 				r = '';
-				n = testfilter(m.s['enabled'](), '<input name="i1" type="submit" disabled="disabled" /><input type="text" disabled name="i2" value=""/><input name="i3"/><select name)"s1" disabled><\/select><input name="i4" />');
-				console.log(n);
+				n = testfilter(m.s['enabled'](), '<input name="i1" type="submit" disabled="disabled" /><a href="#"><\/a><input type="text" disabled name="i2" value=""/><input name="i3"/><select name)"s1" disabled><\/select><input name="i4" />');
 				if (!n) r += ' ERROR: empty result';
 				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
 				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
@@ -1402,63 +1406,179 @@ m(function(){
 		},
 		{
 			description: ':disabled()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['disabled'](), '<input name="i1" type="submit" disabled="disabled" /><a href="#"><\/a><input type="text" disabled name="i2" value=""/><input name="i3"/><select name)"s1" disabled><\/select><input name="i4" />');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 3) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'select') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':checked()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['checked'](), '<input name="i1" type="radio" disabled="disabled" checked="checked" /><a href="#"><\/a><input type="radio" name="i1" value=""/><input type="checkbox" name="i3"/><input type="checkbox" name="i4" checked="checked" />');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':not()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['not'], '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><div><\/div>', ['span, li']);
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 4) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':has()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['has']('li'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':contains()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['contains']('abc'), '<span>abc<\/span><span>abc def<\/span><span>xyz<\/span><div><\/div><ul><li>abc<\/li><li><\/li><\/ul><div>test abc<\/div><div><\/div>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 5) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'span') r += ' ERROR: wrong element matched'
+				if (((n[2] || 0).nodeName || '').toLowerCase() != 'ul') r += ' ERROR: wrong element matched'
+				if (((n[3] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
+				if (((n[4] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':hidden()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['hidden']('hidden'), m('ul:eq(1) input'));
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':visible()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['visible'](), m('ul:eq(1) input:lt(3)'));
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				if (((n[1] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':checkbox()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['checkbox'](), '<input type="checkbox"/><input type="file"/><input type="image"/><input type="password"/><input type="radio"/><input type="reset"/><input type="submit"/><input type="text"/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'checkbox') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':file()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['file'](), '<input type="checkbox"/><input type="file"/><input type="image"/><input type="password"/><input type="radio"/><input type="reset"/><input type="submit"/><input type="text"/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'file') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':image()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['image'](), '<input type="checkbox"/><input type="file"/><input type="image"/><input type="password"/><input type="radio"/><input type="reset"/><input type="submit"/><input type="text"/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'image') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':password()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['password'](), '<input type="checkbox"/><input type="file"/><input type="image"/><input type="password"/><input type="radio"/><input type="reset"/><input type="submit"/><input type="text"/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'password') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':radio()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['radio'](), '<input type="checkbox"/><input type="file"/><input type="image"/><input type="password"/><input type="radio"/><input type="reset"/><input type="submit"/><input type="text"/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'radio') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':reset()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['reset'](), '<input type="checkbox"/><input type="file"/><input type="image"/><input type="password"/><input type="radio"/><input type="reset"/><input type="submit"/><input type="text"/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'reset') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':submit()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['submit'](), '<input type="checkbox"/><input type="file"/><input type="image"/><input type="password"/><input type="radio"/><input type="reset"/><input type="submit"/><input type="text"/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'submit') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		},
 		{
 			description: ':text()',
-			run: function(){ return 'TODO' }
+			run: function(r, n){
+				r = '';
+				n = testfilter(m.s['text'](), '<input type="checkbox"/><input type="file"/><input type="image"/><input type="password"/><input type="radio"/><input type="reset"/><input type="submit"/><input type="text"/>');
+				if (!n) r += ' ERROR: empty result';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'text') r += ' ERROR: wrong element matched'
+				return r || true
+			}
 		}
 	];
 	m('#run').on('click', function(){
