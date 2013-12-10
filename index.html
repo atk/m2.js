@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -31,223 +32,239 @@ pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 .f6 {color:#000;}
 </style>
 <script type="text/javascript">
-// m² 0.0.1 - modular JS micro framework (c) 2013 by Alex Kloss
-!function (d, p/**query-full**/, g/**jsonp**/, j/**/, l, a/**cookie**/, c, e/**query-full**/, r/**/, u) {
+// m² 0.0.2 - modular JS micro framework (c) 2013 by Alex Kloss
+!function (doc, proto/**query-full**/, getElementsByTagName/**jsonp**/, script/**/, length, array/**cookie**/, cookie, escape/**query-full**/, regex/**/, undef) {
 /*
 	Initialisation:
 	- instantiation with "new" if necessary
 	- DOM queries vs. other functions (handled via "i"nit method)
 	m([DOM query, Array, DOM node, onready callback function], [opt: DOM query base])
 */
-m = function (q, b) { return this instanceof m ? '' + q === q ? /**query-performance**/(!b && (b = /^#(\S+)$|^\[name=([^\]]+)\]$|^([a-zA-Z]+)$/.exec(q))) ? this.i(d['getElement' + (b[1] ? 'ById' : b[2] ? 'sByName' : 'sByTagName')](b[1] || b[2] || b[3])) :/**/m(b || d).find(q) : /^f/.test(typeof q) ? m().ready(q/**elementready**/, b/**/) : this.i(q) : new m(q, b) }
-m[p] = {
+m = function (query, base) { return this instanceof m ? '' + query === query ? /**query-performance**/(!base && (base = /^#(\S+)$|^\[name=([^\]]+)\]$|^([a-zA-Z]+)$/.exec(query))) ? this.i(document['getElement' + (base[1] ? 'ById' : base[2] ? 'sByName' : 'sByTagName')](base[1] || base[2] || base[3])) :/**/m(base || doc).find(query) : /^f/.test(typeof query) ? m().ready(query/**elementready**/, base/**/) : this.i(query) : new m(query, base) }
+m[proto] = {
 	// basic length
 	length: 0,
 	// initialisation for everything but functions or DOM queries
-	i: function (q, x) {
-		x = (q || 0).nodeName ? [q] : [], (q && 1 + q[l]) && m.each(q, function(n){ x.push(n) });
-		a.push.apply(this, x)
+	i: function (query, obj, idx) {
+		obj = (query || 0).nodeName ? [query] : [];
+		if (query && 1 + query[length]) { for (idx = -1; query[++idx] && obj.push(query[idx]);); }
+		array.push.apply(this, obj)
 	},
 	// DOMready
-	ready: function (f/**elementready**/, b/**/) { (function t(){ /**elementready**/(b ? m(b)[l] : /**//c/.test(d.readyState)/**elementready**/)/**/ ? f() : setTimeout(t, 99) })() },
+	ready: function (func/**elementready**/, base/**/) { (function t(){ /**elementready**/(base ? m(base)[length] : /**//c/.test(doc.readyState)/**elementready**/)/**/ ? func() : setTimeout(t, 99) })() },
 	// Iterator
-	each: function (a) { return m.each(this, a) },
+	each: function (func) { return m.each(this, func) },
 	// Filtering m(...).filter([function returning either true to keep the node or something like an Array to replace it]), otherwise works as unique()
-	filter: function (f, r) {
-		r = []
-		this.each(function (n, i, c, o) {
-			c = !f || f.call(n, n, i)
-			c = c === !0 ? [n] : c && c[0] ? c : []
-			for (o = 0; n = c[o++]; ~i || r.push(n))
-				for (i = r[l]; i-- && n !== r[i];);
+	filter: function (filter, result) {
+		result = []
+		this.each(function (node, idx, check, ctr) {
+			check = !node || !filter || filter.call(node, node, idx);
+			check = check === true ? [node] : check && check[0] ? check : [];
+			for (ctr = 0; node = check[ctr++]; ~idx || result.push(node))
+				for (idx = result[length]; idx-- && node !== result[idx];);
 		})
-		return m(r)
+		return m(result)
 	},
 	// DOM (sub)query
-	find: function (c/**query-full**/, s, n, o, x/**/) { /**query-full**/
+	find: function (query/**query-full**/, selection, nodes, base, err/**/) { /**query-full**/
 		try {
-			/**/return this.filter(function (n){ return n.querySelectorAll(c) }) /**query-full**/
+			/**/return this.filter(function (node){ return node.querySelectorAll(query) }) /**query-full**/
 		} catch (e) {
-			s = [], o = this, n = m(o), r.lastIndex = 0;
-			(' '+c+',').replace(r, function (_, a, b, c, d, e, f) {
-				_ && (a == ',' ? (n.each(function (n) { s.push(n) }), n = m(o)) : (a = m.s[b == ':' ? c : b || a || '']) ?
-					(a = a.call(n, f || c, d, e, o)) ? (n = n.filter(a)) : (x = 'filter call failed: ') : (x = 'no matching filter found: '))
-				if (x) throw x + _
+			selection = [], base = this, nodes = m(base), regex.lastIndex = 0;
+			/*
+				CSS3 Selector RegExp (matches a-f)
+				a=[>~* +,] (traversal),
+				b=[[#.:[]""] (marker: id, class, attr, pseudo, tag if empty),
+				c=name,
+				d="(" for pseudo, comparison for attr,
+				e=attribute value
+				f=pseudo value
+			*/
+			(' '+query+',').replace(regex, function (_, a, b, c, d, e, f) {
+				_ && (a == ',' ? (nodes.each(function (node) { selection.push(node) }), nodes = m(base)) : (a = m.s[b == ':' ? c : b || a || '']) ?
+					(a = a.call(nodes, f || c, d, e, base)) ? (nodes = nodes.filter(a)) : (err = 'filter call failed: ') : (err = 'no matching filter found: '))
+				if (err) throw err + _
 			})
-			return m(s).filter()
+			return m(selection).filter()
 		}
 	/**/}/**events**/,
 	// DOM event binding
-	on: function (t, c) {
-		return this.each(function (n, h, a) {
-			h = m[p].trigger
-			n['_' + t] ? n['_' + t].push(c) : (n['_' + t] = [c], n[a = 'addEventListener'] ? n[a](t, h) : n.attachEvent('on' + t, h))
+	on: function (type, callback) {
+		return this.each(function (node, handler, addEvent) {
+			handler = m[proto].trigger
+			node['_' + type] ? node['_' + type].push(callback) : (node['_' + type] = [callback], 
+				node[addEvent = 'addEventListener'] ? node[addEvent](type, handler) : node.attachEvent('on' + type, handler))
 		})
 	},
 	// DOM event unbinding
-	off: function (t, c) {
-		return this.each(function (n, h, r) {
-			h = m[p].trigger
-			n['_' + t] = c && m[p].filter.call(n['_' + t], function () { return this != c })
-			if (!(n['_' + t] || 0)[l]) n[r = 'removeEventListener'] ? n[r](t, h) : n.detachEvent('on' + t, h)
+	off: function (type, callback) {
+		return this.each(function (node, handler, removeEvent) {
+			handler = m[proto].trigger
+			node['_' + type] = callback && m[proto].filter.call(node['_' + type], function () { return this != callback })
+			if (!(node['_' + type] || 0)[length]) node[removeEvent = 'removeEventListener'] ? node[removeEvent](type, handler) : node.detachEvent('on' + type, handler)
 		})
 	},
 	// Event chain trigger
-	trigger: function (t, r) {
-		t = t || window.event
-		t = t.type ? t : { type: t }
-		t.target || (t.target = t.srcElement)
-		return this instanceof m ? this.each(function(n){ m[p].trigger.call(n, t) }) :
-			(m.each((n = t.srcElement || this)['_'+t.type], function(c){ r = c.call(n, t) === !1 && r }), !r)
+	trigger: function (event, result) {
+		event = event || window.event
+		event = event.type ? event : { type: event }
+		event.target || (event.target = event.srcElement)
+		return this instanceof m ? this.each(function(node){ m[p].trigger.call(node, event) }) :
+			(m.each((node = event.srcElement || this)['_'+event.type], function(callback){ result = callback.call(node, event) === false && result }), !result)
 	}/**html**/,
 	// read/write HTML
-	html : function(h){ return h === u ? this[0].innerHTML : this.each(function (n) { n.innerHTML = h }) }/**attr**/,
+	html : function(html){ return html === undef ? this[0].innerHTML : this.each(function (node) { node.innerHTML = html }) }/**attr**/,
 	// get/set Attributes
-	attr: function(k, v){
-		if (v === u && '' + k !== (k || '')) {
-			for (v in k) this.attr(v, k[v])
+	attr: function(key, value){
+		if (value === undef && '' + key !== (key || '')) {
+			for (value in key) this.attr(value, key[value])
 			return this
 		}
-		return k && v !== u ? this.each(function (n) { n.setAttribute(k, v), n[k] = v }) : this[0] ?
-			this[0][k] || (this[0].getAttribute && this[0].getAttribute(k)) || '' : ''
+		return key && value !== undef ? this.each(function (node) { node.setAttribute(key, value), node[key] = value }) : this[0] ?
+			this[0][key] || (this[0].getAttribute && this[0].getAttribute(key)) || '' : ''
 	}/**css**/,
 	// get/set CSS attributes
-	css: function(k, v){
-		if (!v && '' + k !== (k || '')) {
-			for (v in k) this.css(v, k[v])
+	css: function(key, value){
+		if (!value && '' + key !== (key || '')) {
+			for (value in key) this.css(value, key[value])
 			return this
 		}
-		return k && v ? this.each(function () { this.style[k] = v }) : this[0] ? this[0][v='currentStyle'] ? this[0][v][k] :
-			window.getComputedStyle(this[0])[k] || this[0].style[k] : ''
+		return key && value ? this.each(function () { this.style[key] = value }) : this[0] ? this[0][value = 'currentStyle'] ? this[0][value][key] :
+			window.getComputedStyle(this[0])[key] || this[0].style[key] : ''
 	}/**class**/,
 	// has/add/remove/toggle class names (convenience functions below)
-	cls: function (v, n, h, r, t) {
-		v = v == 'has' ? 0 : v
-		r = eval('/\\b' + n + '\\b/g')
-		t = this.each(function (t, c, i, j) {
-			r.lastIndex = 0
-			i = t[c = 'className'].replace(r, '')
-			j = i != t[c]
-			h = h || j
-			v && (t[c] = i + { add: 1, toggle: !j }[v] ? ' ' + n : '')
+	cls: function (action, name, has, search) {
+		action = action == 'has' ? 0 : action
+		search = eval('/\\b' + n + '\\b/g')
+		this.each(function (node, className, without, within) {
+			search.lastIndex = 0
+			without = node[className = 'className'].replace(search, '')
+			within = without != node[className]
+			has = has || within
+			action && (node[className] = without + { add: 1, toggle: !within }[action] ? ' ' + name : '')
 		})
-		return v ? r : h
+		return action ? this : has
 	}/**value**/,
 	// get/set value
-	val: function (v) { return '' + v === v ? this.each(function (n) { value = v }) : this[0].value }/**selection**/,
+	val: function (value) { return '' + value === value ? this.each(function (node) { node.value = value }) : this[0].value }/**selection**/,
 	/*
 		inspect/manipulate/create Selection
 		m(s).sel() - inspect Selection -> { start, end, length, text }
 		m(s).sel({ start: 0-n, end: 0-n, text: 'xy' }) -> create/manipulate selection
 	*/
-	sel: function (o, n, c, e, v) {
-		n = this[0]
-		v = 'value'
-		v in n || (v = 'innerText')
-		return n ? o ? ((o.text && (n[v] = n[v].substr(0, o.start||0) + o.text + n[v].substr((o.start||0)+(o.end||n[v][l])))),
-			(o.start && o.end && (((c = d[c='createRange'] ? d[c]() : d.createTextRange())), c.setStart ?
-			(c.setStart(n, o.start), c.setEnd(n, o.end)) : (c.moveToElementText(n), c.moveStart(o.start), c.moveEnd(o.end), c.select())), this)) :
-			(o='selection', c = 1+n[o+'End'] ? { start: n[o+'Start'], end: n[o+'End'] } :
-			(n.focus(), o = d[o].createRange(), c = n.createTextRange(), e = c.duplicate(), e.moveToBookmark(o.getBookmark()),
-			e.setEndPoint('EndToStart', c), c = { start: e.text[l], end: e.text[l] + o.text[l] }),
-			c.text = n[v].substr(c.start, (c[l] = c.end - c.start)), c): {}
+	sel: function (obj, node, createdRange, end, value) {
+		node = this[0]
+		value = 'value'
+		value in node || (value = 'innerText')
+		return node ? obj ? ((obj.text && (node[value] = node[value].substr(0, obj.start||0) + obj.text + node[value].substr((obj.start||0) + 
+			(obj.end||node[valuealue][length])))),
+			(obj.start && obj.end && (((createdRange = doc[createdRange='createRange'] ? doc[createdRange]() : doc.createTextRange())), createdRange.setStart ?
+			(createdRange.setStart(node, obj.start), createdRange.setEnd(node, obj.end)) : (createdRange.moveToElementText(node), createdRange.moveStart(obj.start), 
+				createdRange.moveEnd(obj.end), createdRange.select())), this)) :
+			(obj = 'selection', createdRange = 1 + node[obj + 'End'] ? { start: node[obj + 'Start'], end: node[obj + 'End'] } :
+			(n.focus(), obj = doc[obj].createRange(), createdRange = node.createTextRange(), end = createdRange.duplicate(), end.moveToBookmark(obj.getBookmark()),
+			end.setEndPoint('EndToStart', createdRange), createdRange = { start: end.textcreatedRange[length], end: end.text[length] + obj.text[length] }),
+			createdRange.text = node[value].substr(createdRange.start, (createdRange[length] = createdRange.end - createdRange.start)), createdRange): {}
 	}/**position**/,
-	pos: function () {
-		function o (a, x, y, z) { return a && a[z = 'getBoundingClientRect'] && (a = a[z](), z = document.documentElement) ?
-			{ left: (this.pageXOffset || z.scrollLeft) + a.left, top: (this.pageYOffset || z.scrollTop) + a.top} :
-			a ? o(a.offsetParent, ~~x + ~~a.offsetLeft, ~~y + ~~a.offsetTop) : { left: x, top: y } }
-		return o(this[0])
+	pos: function (offset) {
+		offset = function (node, x, y, html) { return node && node[html = 'getBoundingClientRect'] && (node = node[html](), html = document.documentElement) ?
+			{ left: (this.pageXOffset || html.scrollLeft) + node.left, top: (this.pageYOffset || html.scrollTop) + node.top } :
+			node ? offset(node.offsetParent, ~~x + ~~node.offsetLeft, ~~y + ~~node.offsetTop) : { left: x, top: y } }
+		return offset(this[0])
 	}/**ajax-full**/,
 	// convenient AJAX loading
-	load: function (u, t, c) {
-		t = this,
-		c = function (h) {
-			h = this.responseText
-			t.each(function (n) { n.innerHTML = h })
+	load: function (url, nodes, callback) {
+		nodes = this,
+		callback = function (html) {
+			html = this.responseText
+			nodes.each(function (node) { node.innerHTML = html })
 		}
-		m.ajax(u.url ? (u.callback = c, u) : { url: u, callback: c })
+		m.ajax(url.url ? (url.callback = callback, url) : { url: url, callback: callback })
 	}/**/,
 	// this makes most development consoles interpret the output as Array
-	splice: a.splice
+	splice: array.splice
 }/**class-full**/
 // class name convenience functions
-'has add remove toggle'.replace(/\w+/g, function(x) {
-	if (x) m[p][x+'Class'] = function (c) { return this.cls(x, c) }
+'has add remove toggle'.replace(/\w+/g, function(action) {
+	if (action) m[proto][action + 'Class'] = function (name) { return this.cls(action, name) }
 })/**query-full**/
 // Selector functions: each returns a function that will be used to filter the output (re-use where possible and reasonable)
 m.s = {
-	'[': function (k, c, v, i) {
-		v = c ? eval('/' + ({'|=': '\\b', '~=': '\\b', '=': '^', '!=': '^'}[c] || '') +
-			((v || '').replace(/[.+*()]/g, '\\\1') || '.+') +
-			({'|=': '(-|$)', '~=': '\\b', '=': '$', '!=': '$'}[c] || '') + '/' + (i || '')) : /.+/;
-		return function(n){ return !!(v.test(n[k] || (typeof n.getAttribute == 'function' && n.getAttribute(k)) || '') ^ (c == '!=')) };
+	'[': function (key, comparison, value, flags) {
+		value = comparison ? eval('/' + ({'|=': '\\b', '~=': '\\b', '=': '^', '!=': '^'}[comparison] || '') +
+			((value || '').replace(/[.+*()]/g, '\\\1') || '.+') +
+			({'|=': '(-|$)', '~=': '\\b', '=': '$', '!=': '$'}[comparison] || '') + '/' + (flags || '')) : /.+/;
+		return function(node){ return !!(value.test(node[key] || (typeof node.getAttribute == 'function' && node.getAttribute(key)) || '') ^ (comparison == '!=')) };
 	},
-	'#': function (n) { return function (t){ return t.id === n } },
-	'.': function (n) { return m.s['[']('className', '~=', n) },
-	'': function (n) { return m.s['[']('nodeName', '=', n, 'i') },
-	'*': function () { return function (n) { return n[g] && n[g]('*') } },
-	'>': function () { return function (n, r, i) {
-		for (r = [], n = n.childNodes, i = 0; n[i]; i++) n[i].nodeType == 1 && r.push(n[i]);
-		return r }
+	'#': function (id) { return function (node){ return node.id == id } },
+	'.': function (classname) { return m.s['[']('className', '~=', classname) },
+	'': function (tagname) { return m.s['[']('nodeName', '=', tagname, 'i') },
+	'*': function () { return function (node) { return node[getElementsByTagName] && node[getElementsByTagName]('*') } },
+	'>': function () { return function (nodes, result, idx) {
+		for (result = [], nodes = nodes.childNodes, idx = 0; nodes[idx]; idx++) nodes[idx].nodeType == 1 && result.push(nodes[idx]);
+		return result }
 	},
-	'+': function () { return function (n) { for (;n = n.nextSibling;) if ((n||0).nodeType == 1) return [n] } },
-	'~': function () { return function (n, r) {
-		for (r = []; n = n.nextSibling; n && n.nodeType == 1 && r.push(n));
-		return r }
+	'+': function () { return function (node) { for (;node = node.nextSibling;) if ((node||0).nodeType == 1) return [node] } },
+	'~': function () { return function (node, result) {
+		for (result = []; node = node.nextSibling; node && node.nodeType == 1 && result.push(node));
+		return result }
 	},
-	'nth-of-type': function (c, s, i, n, r) {
-		c = (c == 'odd' ? '2n+1' : c == 'even' ? '2n+0' : c).split(/n/), i = +c[0], s = c[1], r = r ? 'nextSibling' : 'previousSibling';
-		return function (t, c) {
-			for (t=this, c=1; t=t[r]; t.nodeType == 1 && (n == '*' || t.nodeName == this.nodeName) && c++);
-			return !(s ? (c - s) % i : c - i);
+	'nth-of-type': function (count, sibling, idx, tagname, direction) {
+		count = (count == 'odd' ? '2n+1' : count == 'even' ? '2n+0' : count).split(/n/), 
+		idx = +count[0], 
+		sibling = count[1], 
+		direction = direction ? 'nextSibling' : 'previousSibling';
+		return function (node, count) {
+			for (node = this, count = 1; node = node[direction]; node.nodeType == 1 && (tagname == '*' || node.nodeName == this.nodeName) && count++);
+			return !(sibling ? (count - sibling) % idx : count - idx);
 		}
 	},
-	'nth-last-of-type': function (c) { return m.s['nth-of-type'](c, 0, 0, 0, 1) },
-	'nth-child': function (c) { return m.s['nth-of-type'](c, 0, 0, '*') },
-	'nth-last-child': function (c) { return m.s['nth-of-type'](c, 0, 0, '*', 1) },
-	'first-of-type': function (t) { return function(n){ return n.parentNode[g](t == '*' ? t : n.nodeName)[0] == n } },
-	'last-of-type': function (t) { return function(n){
-		for (;(n = n.nextSibling||0);) if (n.nodeType == 1 && (t == '*' || (n.nodeName == this.nodeName))) return false;
+	'nth-last-of-type': function (count) { return m.s['nth-of-type'](count, 0, 0, 0, 1) },
+	'nth-child': function (count) { return m.s['nth-of-type'](count, 0, 0, '*') },
+	'nth-last-child': function (count) { return m.s['nth-of-type'](count, 0, 0, '*', 1) },
+	'first-of-type': function (tagname) { return function(node){ return node.parentNode[getElementsByTagName](tagname == '*' ? tagname : node.nodeName)[0] == node } },
+	'last-of-type': function (tagname) { return function(node){
+		for (;(node = node.nextSibling||0);) if (node.nodeType == 1 && (tagname == '*' || (node.nodeName == this.nodeName))) return false;
 		return true;
 	} },
-	'only-of-type': function (t) { return function(n){ return n.parentNode[g](t == '*' ? t : n.nodeName)[l] == 1 } },
+	'only-of-type': function (tagname) { return function(node){ return node.parentNode[getElementsByTagName](tagname == '*' ? tagname : node.nodeName)[length] == 1 } },
 	'first-child': function () { return m.s['first-of-type']('*') },
 	'last-child': function () { return m.s['last-of-type']('*') },
 	'only-child': function () { return m.s['only-of-type']('*') },
-	empty: function () { return function (n) { return !n.childNodes[l] } },
-	target: function (t) { return this['[']('id', '=', /^#(.+)$/.test(location.hash) ? RegExp.$1 : '#') },
-	lang: function (c) { return this['[']('lang', '|=', c, 'i') },
-	enabled: function () { return function (n) { return n.disabled === !1 } },
-	disabled: function () { return function (n) { return !!n.disabled } },
-	checked: function () { return function (n) { return !!n.checked } },
-	not: function (n, a, b, c, d) { return n = m(n, d), function (i) { for (i = 0; n[i];) if (n[i++] == this) return !1; return !0 } },
-	root: function() { return function(n){ return n == d.documentElement } },
-	has: function(q) { return function(n){ return m(n).find(q)[l] > 0 } },
-	contains: function (c, t, r) {
-		t = function(n, r){ return n ? (n.nodeType == 3 && r.push(n.data), t(n.firstChild, r), t(n.nextSibling, r)) : r }
-		return function(n) { return t(n.firstChild, r = []).join('').indexOf(c)>-1 }
+	empty: function () { return function (node) { return !node.childNodes[length] } },
+	target: function () { return this['[']('id', '=', /^#(.+)$/.test(location.hash) ? RegExp.$1 : '#') },
+	lang: function (lang) { return this['[']('lang', '|=', lang, 'i') },
+	enabled: function () { return function (node) { return node.disabled === false } },
+	disabled: function () { return function (node) { return !!node.disabled } },
+	checked: function () { return function (node) { return !!node.checked } },
+	not: function (negated, x, y, z, base) { return negated = m(negated, base), function (idx) { for (idx = 0; negated[idx];) if (negated[idx++] == this) return false; return true } },
+	root: function() { return function(node){ return node == doc.documentElement } },
+	has: function(query) { return function(node){ return m(node).find(query)[length] > 0 } },
+	contains: function (content, text, texts) {
+		text = function(node, texts){ return node ? (node.nodeType == 3 && texts.push(node.data), text(node.firstChild, texts), text(node.nextSibling, texts)) : texts }
+		return function(node) { return text(node.firstChild, texts = []).join('').indexOf(content) > -1 }
 	},
-	hidden: function (v) {return function (n, s) { return !!(!v ^ !(n.offsetWidth * n.offsetHeight || 
-		((s = n.currentStyle || { visibility: 0, display: 0 }).visibility == 'hidden' || s.display == 'none'))) } },
+	hidden: function (hidden) {return function (node, style) { return !!(!hidden ^ (!(node.offsetWidth * node.offsetHeight) || 
+		!((style = node.currentStyle || {}).visibility != 'hidden' || style.display != 'none'))) } },
 	visible: function () { return m.s.hidden() },
-	odd: function(i) { return function(){ return (i = !i) } },
-	even: function(i) { return function(){ return !(i = !i) } },
-	eq: function(i) { i |= 0; return function(){ return !i-- } },
+	odd: function(odd) { return function(){ return (odd = !odd) } },
+	even: function(odd) { return function(){ return !(odd = !odd) } },
+	eq: function(idx) { idx |= 0; return function(){ return !idx-- } },
+	seq: function(seq) { seq = seq.split(','); return function(node, idx){ return idx >= seq[0] && (isNaN(seq[1]) || idx < seq[1]) } },
 	first: function() { return m.s.eq(0) },
-	last: function() { return m.s.eq(this[l]-1) },
-	seq: function(s) { s = s.split(','); return function(n, i){ return i >= s[0] && (isNaN(s[1]) || i < s[1]) } },
-	gt: function(i) { return m.s.seq(''+i) },
-	lt: function(i) { return m.s.seq('0,'+i) }
+	last: function() { return m.s.eq(this[length]-1) },
+	gt: function(idx) { return m.s.seq(''+idx) },
+	lt: function(idx) { return m.s.seq('0,'+idx) }
 }
 // extra selectors
 m.s[' '] = m.s['*']
-'checkbox file image password radio reset submit text'.replace(/\w+/g, function (x) {
-	if (x) m.s[x] = function(){ return function(n) { return (n.type || '').toLowerCase() == x }}
+'checkbox file image password radio reset submit text'.replace(/\w+/g, function (type) {
+	if (type) m.s[type] = function(){ return function(node) { return (node.type || '').toLowerCase() == type }}
 });/**/
 // Iterator: m.each([object/array], [callback])
-m.each = function (a, b, c) {
-	for (c in a) (a[l] + 1 ? isNaN(c) : !a.hasOwnProperty(c)) || b.call(a[c], a[c], !isNaN(c) ? +c : c, a);
-	return a
+m.each = function (obj, func, item) {
+	for (item in obj) (obj[length] + 1 ? isNaN(item) : !obj.hasOwnProperty(item)) || func.call(obj[item], obj[item], !isNaN(item) ? +item : item, obj);
+	return obj
 }/**ajax**/
 /* Ajax:
 	m.ajax({
@@ -262,13 +279,13 @@ m.each = function (a, b, c) {
 	})
 	returns RequestObject for synchronous or asynchronous use (latter only if callback is specified)
 */
-m.ajax = function (o, x) {
-	x = new XMLHttpRequest()
-	x.open(o.method || 'get', o.url, o.callback && (x.onreadystatechange = o.callback), o.user, o.password)/**ajax-init**/
-	o.init && o.init(x)/**ajax-header**/
-	m.each(o.header||[], function(v, k) { x.setRequestHeader(k, v) })/**ajax**/
-	x.send(o.data)
-	return x
+m.ajax = function (conf, xhr) {
+	xhr = new XMLHttpRequest()
+	xhr.open(conf.method || 'get', conf.url, conf.callback && (x.onreadystatechange = conf.callback), conf.user, conf.password)/**ajax-init**/
+	conf.init && conf.init(xhr)/**ajax-header**/
+	m.each(conf.header||[], function(value, key) { xhr.setRequestHeader(key, value) })/**ajax**/
+	xhr.send(conf.data)
+	return xhr
 }/**jsonp**/
 /* JSONp:
 	m.jsonp({
@@ -277,17 +294,17 @@ m.ajax = function (o, x) {
 		"_": '[optional: callback name - do not use unless you know what you are doing]'
 	})
 */
-m.jsonp = function (o, h, s) {
-	h = d.getElementsByTagName('head')[0],
-	s = d.createElement(j),
-	o.callback && (this[o._ = o._ || j + 0 | i++ * new Date()] = function(){
-		h.removeChild(s)
-		o.callback.apply(this, arguments)
-		delete this[[]._]
+m.jsonp = function (conf, head, script) {
+	head = doc.getElementsByTagName('head')[0],
+	script = doc.createElement(script),
+	conf.callback && (this[conf._ = conf._ || j + 0 | i++ * new Date()] = function(){
+		head.removeChild(script)
+		conf.callback.apply(this, arguments)
+		delete this[conf._]
 	}),
-	s.src = o.url.replace(/\??$/, o._),
-	h.appendChild(s)
-	return s
+	script.src = conf.url.replace(/\??$/, conf._),
+	head.appendChild(script)
+	return script
 }/**cookie**/
 /* Cookie
 	m.cookie([required:cookie name string]) // returns cookie if set or ''
@@ -300,48 +317,49 @@ m.jsonp = function (o, h, s) {
 		extra: '[optional: extra string, e.g. "secure"]'
 	}) // sets cookie based on object
 */
-m[c] = function (o) {
-	if ('' + o === o)
-		return (eval('/(^|[ ;])'+e(o)+'=([^;]+)/')).test(d[c]) && unescape(RegExp.$2);
-	o && o.name && o.value && (d[c] = e(o.name) + '=' + e(o.value) +
-		(o.date ? ('; expires=' + (new Date(+o.date === o.date ? +new Date() + o.date : o.date)).toGMTString()) : '') +
-		(o.domain ? ('; domain=' + o.domain) : '') +
-		(o.path ? '; path=' + o.path : '') +
-		(o.extra || '') + ';')
+m[cookie] = function (obj) {
+	if ('' + obj === obj)
+		return (eval('/(^|[ ;])'+escape(obj)+'=([^;]+)/')).test(doc[cookie]) && unescape(RegExp.$2);
+	obj && obj.name && obj.value && (doc[cookie] = escape(obj.name) + '=' + escape(obj.value) +
+		(obj.date ? ('; expires=' + (new Date(+obj.date === obj.date ? +new Date() + obj.date : obj.date)).toGMTString()) : '') +
+		(obj.domain ? ('; domain=' + obj.domain) : '') +
+		(obj.path ? '; path=' + obj.path : '') +
+		(obj.extra || '') + ';')
 }/**url**/
 /*
 	m.url('url-string') // -> URL-object (similar to location, but o.search[key] yields value, though o.search+'' yields the full string
 */
-m.url = function (u, o) {
-	u = (u || location.href).match(/^([^:\/\?#\.]*:?)(\/\/([^\/\?#:]*))?:?(\d*)(\.*\/[^?#]*)(\\?[^#]*)?(#.*)?$/)
-	o = { toString: function () { return '' + o.protocol + (o.host != '' ? '\/\/' : '') + o.host + o.pathname + o.search + o.hash; }, search: { toString: function(r, t) {
-			r = []
-			t = 'toString'
-			m.each(this, function(v, k){ (k || t) != t && r.push(k + '=' + v) })
-			return r.join('&')
+m.url = function (url, obj) {
+	url = (url || location.href).match(/^([^:\/\?#\.]*:?)(\/\/([^\/\?#:]*))?:?(\d*)(\.*\/[^?#]*)(\\?[^#]*)?(#.*)?$/)
+	obj = { toString: function () { return '' + obj.protocol + (obj.host != '' ? '\/\/' : '') + obj.host + obj.pathname + obj.search + obj.hash; }, 
+			search: { toString: function(result, tostring) {
+			result = [],
+			tostring = 'toString',
+			m.each(this, function(value, key){ (key || tostring) != tostring && result.push(key + '=' + value) })
+			return result.join('&')
 		} } }
-	'href protocol base hostname port pathname search hash'.replace(/\w+/g, function(k, v, r) {
-		v = u.shift() || ''
-		k != 'search' ? (o[k] = v) : v.replace(/([^\?&=]+)=?([^&]*)?/g, function(f, i, d) { if (k) o[k][unescape(i)] = unescape(d || '') })
+	'href protocol base hostname port pathname search hash'.replace(/\w+/g, function(key, value, r) {
+		value = url.shift() || ''
+		key != 'search' ? (obj[key] = value) : value.replace(/([^\?&=]+)=?([^&]*)?/g, function(_, item, data) { if (key) obj[key][unescape(item)] = unescape(data || '') })
 	})
-	o.host = o.hostname + (o.port != '' ? ':' + o.port : '');
-	if (o.host.match(/^\.\.?$/)) o.path = o.host + o.path, o.host = '';
-	return o;
+	obj.host = obj.hostname + (obj.port != '' ? ':' + obj.port : '');
+	if (obj.host.match(/^\.\.?$/)) obj.path = obj.host + obj.path, obj.host = '';
+	return obj;
 }
-m.each(m.url(), function(v, k){ m.url[k] = v })/**useragent**/
+m.each(m.url(), function(value, key){ m.url[key] = value })/**useragent**/
 // useragent detection
-m.ua = function (o, x, i, v) {
-	o = { ua: navigator.userAgent.toLowerCase(), info: {} }
-	x = 'browser'
-	v = 'version'
-	o.ua.replace(/[\(\)]/g, ';').replace(/\s*(\w*?\ ?\w+[\:\s]?[^\d\s;]*?)[\/\ ;](\d[.\w]*|)/g, function(f, k, v) { o.info[k] = o.info[k] || v || !0; });
-	'msie1opr1firefox1seamonkey1aurora1iron1chrome1safari1opera1windows0windows nt0windows phone0windows rt0mac os0android0iphone0ipad0ipod0blackberry0rim0linux0'.replace(/(\D+)(\d)/g, function(n, c, d) {
-		n = +d ? x : 'os'
-		o.info[c] && (o[n] = o[n] || { name: c == 'opr' ? 'opera' : c == 'chrome' && +o.info[v] == 1 ? 'native' : c, version: (+d ? o.info[v] : 0) || o.info[c] },
-			o[n][o[n].name] = parseFloat(o[n][v]) || o[n][v])
+m.ua = function (obj, browser, ie, version) {
+	obj = { ua: navigator.userAgent.toLowerCase(), info: {}, browser: {}, os: {} },
+	browser = 'browser',
+	version = 'version',
+	obj.ua.replace(/[\(\)]/g, ';').replace(/\s*(\w*?\ ?\w+[\:\s]?[^\d\s;]*?)[\/\ ;](\d[.\w]*|)/g, function(_, key, value) { obj.info[key] = obj.info[key] || value || true; });
+	'msie1opr1firefox1seamonkey1aurora1iron1chrome1safari1opera1windows0windows nt0windows phone0windows rt0mac os0android0iphone0ipad0ipod0blackberry0rim0linux0'.replace(/(\D+)(\d)/g, function(node, name, digit) {
+		node = +digit ? browser : 'os'
+		obj.info[name] && (obj[node] = obj[node] || { name: name == 'opr' ? 'opera' : name == 'chrome' && +obj.info[version] == 1 ? 'native' : name, version: (+digit ? obj.info[version] : 0) || obj.info[name] },
+			obj[node][obj[node].name] = parseFloat(obj[node][version]) || obj[node][version])
 	});
-	(i = +o.info.trident + 4) && (o[x].renderMode = o.info[o[x].name = 'msie'], o[x].msie = o[x].version = i);
-	return o
+	(ie = +obj.info.trident + 4) && (obj[browser].renderMode = obj.info[obj[browser].name = 'msie'], obj[browser].msie = obj[browser][version] = ie);
+	return obj
 }()/**/
 }(
 	document,
@@ -352,15 +370,6 @@ m.ua = function (o, x, i, v) {
 	[]/**cookie**/,
 	'cookie',
 	escape/**query-full**/,
-	/*
-		CSS3 Selector RegExp (matches a-f)
-		a=[>~* +,] (traversal),
-		b=[[#.:[]""] (marker: id, class, attr, pseudo, tag if empty),
-		c=name,
-		d="(" for pseudo, comparison for attr,
-		e=attribute value
-		f=pseudo value
-	*/
 	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**/
 );
 </script>
@@ -369,9 +378,9 @@ m.ua = function (o, x, i, v) {
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework</p>
 <ul>
-<li>1.66kb - 14.28kb commented/uncompressed</li>
-<li>785b - 9.19kb bytes compressed using Google Closure Compiler</li>
-<li>481b - 3.85kb bytes compressed/gzipped using Google Closure Compiler</li>
+<li>2kb - 17.72kb commented/uncompressed</li>
+<li>795b - 9.38kb bytes compressed using Google Closure Compiler</li>
+<li>493b - 3.95kb bytes compressed/gzipped using Google Closure Compiler</li>
 </ul>
 <p>&copy; 2013 Alex Kloss.</p>
 <h2>Features</h2>
@@ -383,6 +392,7 @@ m.ua = function (o, x, i, v) {
 			<li>Simple usage through chaining</li>
 			<li>jQuery-like syntax</li>
 			<li>Variable Compatibility (depending on size/features)</li>
+			<li>Speaking variable names allow for easy understanding and adaption</li>
 			<li>Licensed under GPLv2</li>
 		</ul>
 	</li>
@@ -824,7 +834,7 @@ m(function(){
 				r = '';
 				n = testfilter(m.s['']('li'), '<span><\/span><div><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
 				if (!n) r += ' ERROR: empty result';
-				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements: '+n.length;
 				if (((n[0] || 0).nodeName || '').toLowerCase() != 'li') r += ' ERROR: wrong element matched'
 				return r || true
 			}
@@ -835,7 +845,7 @@ m(function(){
 				r = '';
 				n = testfilter(m.s['#']('test'), '<span><\/span><div id="test"><\/div><ul><li><\/li><\/ul><a><\/a><img/>');
 				if (!n) r += ' ERROR: empty result';
-				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
+				if (n.length != 1) r += ' ERROR: wrong number of matched elements '+n.length;
 				if (((n[0] || 0).nodeName || '').toLowerCase() != 'div') r += ' ERROR: wrong element matched'
 				return r || true
 			}
@@ -1395,7 +1405,7 @@ m(function(){
 			description: ':enabled()',
 			run: function(r, n){
 				r = '';
-				n = testfilter(m.s['enabled'](), '<input name="i1" type="submit" disabled="disabled" /><a href="#"><\/a><input type="text" disabled name="i2" value=""/><input name="i3"/><select name)"s1" disabled><\/select><input name="i4" />');
+				n = testfilter(m.s['enabled'](), '<input name="i1" type="submit" disabled="disabled" /><a href="#" disabled><\/a><input type="text" disabled name="i2" value=""/><input name="i3"/><select name)"s1" disabled><\/select><input name="i4" />');
 				if (!n) r += ' ERROR: empty result';
 				if (n.length != 2) r += ' ERROR: wrong number of matched elements';
 				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input') r += ' ERROR: wrong element matched'
