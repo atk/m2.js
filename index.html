@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -341,7 +340,7 @@ m.ua = function (o, x, i, v) {
 		o.info[c] && (o[n] = o[n] || { name: c == 'opr' ? 'opera' : c == 'chrome' && +o.info[v] == 1 ? 'native' : c, version: (+d ? o.info[v] : 0) || o.info[c] },
 			o[n][o[n].name] = parseFloat(o[n][v]) || o[n][v])
 	});
-	(i = +o.info.trident + 4) && (o.ua[x].renderMode = o.info[o.ua[x].name = 'msie'], o.ua[x].msie = o.ua[x].version = i);
+	(i = +o.info.trident + 4) && (o[x].renderMode = o.info[o[x].name = 'msie'], o[x].msie = o[x].version = i);
 	return o
 }()/**/
 }(
