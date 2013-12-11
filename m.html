@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -293,10 +294,10 @@ m.ajax = function (conf, xhr) {
 		"_": '[optional: callback name - do not use unless you know what you are doing]'
 	})
 */
-m.jsonp = function (conf, head, script) {
+m['jsonp'] = function (conf, head, script) {
 	head = doc.getElementsByTagName('head')[0],
 	script = doc.createElement(script),
-	conf.callback && (this[conf._ = conf._ || j + 0 | i++ * new Date()] = function(){
+	conf.callback && (this[conf._ = conf._ || script + 0 | i++ * new Date()] = function(){
 		head.removeChild(script)
 		conf.callback.apply(this, arguments)
 		delete this[conf._]
