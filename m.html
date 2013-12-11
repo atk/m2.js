@@ -262,7 +262,7 @@ m.s[' '] = m.s['*']
 	if (type) m.s[type] = function(){ return function(node) { return (node.type || '').toLowerCase() == type }}
 });/**/
 // Iterator: m.each([object/array], [callback])
-m['each'] = function (obj, func, item) {
+m.each = function (obj, func, item) {
 	for (item in obj) (obj[length] + 1 ? isNaN(item) : !obj.hasOwnProperty(item)) || func.call(obj[item], obj[item], !isNaN(item) ? +item : item, obj);
 	return obj
 }/**ajax**/
@@ -279,7 +279,7 @@ m['each'] = function (obj, func, item) {
 	})
 	returns RequestObject for synchronous or asynchronous use (latter only if callback is specified)
 */
-m['ajax'] = function (conf, xhr) {
+m.ajax = function (conf, xhr) {
 	xhr = new XMLHttpRequest()
 	xhr.open(conf.method || 'get', conf.url, conf.callback && (x.onreadystatechange = conf.callback), conf.user, conf.password)/**ajax-init**/
 	conf.init && conf.init(xhr)/**ajax-header**/
@@ -294,7 +294,7 @@ m['ajax'] = function (conf, xhr) {
 		"_": '[optional: callback name - do not use unless you know what you are doing]'
 	})
 */
-m['jsonp'] = function (conf, head, scripttag) {
+m.jsonp = function (conf, head, scripttag) {
 	head = doc.getElementsByTagName('head')[0],
 	scripttag = doc.createElement(script),
 	conf.callback && (window[conf._ = conf._ || script + (+new Date())] = function(){
@@ -329,7 +329,7 @@ m[cookie] = function (obj) {
 /*
 	m.url('url-string') // -> URL-object (similar to location, but o.search[key] yields value, though o.search+'' yields the full string
 */
-m['url'] = function (url, obj) {
+m.url = function (url, obj) {
 	url = (url || location.href).match(/^([^:\/\?#\.]*:?)(\/\/([^\/\?#:]*))?:?(\d*)(\.*\/[^?#]*)(\\?[^#]*)?(#.*)?$/)
 	obj = { toString: function () { return '' + obj.protocol + (obj.host != '' ? '\/\/' : '') + obj.host + obj.pathname + obj.search + obj.hash; }, 
 			search: { toString: function(result, tostring) {
@@ -348,7 +348,7 @@ m['url'] = function (url, obj) {
 }
 m.each(m.url(), function(value, key){ m.url[key] = value })/**useragent**/
 // useragent detection
-m['ua'] = function (obj, browser, ie, version) {
+m.ua = function (obj, browser, ie, version) {
 	obj = { ua: navigator.userAgent.toLowerCase(), info: {}, browser: {}, os: {} },
 	browser = 'browser',
 	version = 'version',
@@ -378,9 +378,9 @@ m['ua'] = function (obj, browser, ie, version) {
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework</p>
 <ul>
-<li>2kb - 17.72kb commented/uncompressed</li>
-<li>795b - 9.38kb bytes compressed using Google Closure Compiler</li>
-<li>493b - 3.95kb bytes compressed/gzipped using Google Closure Compiler</li>
+<li>2kb - 17.7kb commented/uncompressed</li>
+<li>817b - 9.63kb bytes compressed using Google Closure Compiler</li>
+<li>501b - 4.03kb bytes compressed/gzipped using Google Closure Compiler</li>
 </ul>
 <p>&copy; 2013 Alex Kloss.</p>
 <h2>Features</h2>
@@ -447,7 +447,7 @@ m(function(){
 			if (m.ua.browser.msie) {
 				r = { compiledCode: '/* CORS Request to Google\'s Closure Compiler REST service not supported by MSIE */' };
 			} else {
-				r = JSON.parse(m.ajax({url: 'http://closure-compiler.appspot.com/compile', method: 'post', header: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, data: 'js_code='+encodeURIComponent(r)+'&compilation_level=ADVANCED_OPTIMIZATIONS&output_format=json&output_info=compiled_code&output_info=statistics'}).responseText)
+				r = JSON.parse(m.ajax({url: 'http://closure-compiler.appspot.com/compile', method: 'post', header: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, data: 'js_code='+encodeURIComponent(r)+'&compilation_level=SIMPLE_OPTIMIZATIONS&output_format=json&output_info=compiled_code&output_info=statistics'}).responseText)
 				s += ', '+r.statistics.compressedSize+' bytes compressed'+(r.statistics.compressedSize > 1024 ? ' (' + toKB(r.statistics.compressedSize) + 'kb)' : '')+', ' + r.statistics.compressedGzipSize+' bytes compressed/gzipped'+(r.statistics.compressedGzipSize > 1024 ? ' (' + toKB(r.statistics.compressedGzipSize) + 'kb)' : '')
 			}
 			m('#length').html(s)
