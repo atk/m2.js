@@ -262,7 +262,7 @@ m.s[' '] = m.s['*']
 	if (type) m.s[type] = function(){ return function(node) { return (node.type || '').toLowerCase() == type }}
 });/**/
 // Iterator: m.each([object/array], [callback])
-m.each = function (obj, func, item) {
+m['each'] = function (obj, func, item) {
 	for (item in obj) (obj[length] + 1 ? isNaN(item) : !obj.hasOwnProperty(item)) || func.call(obj[item], obj[item], !isNaN(item) ? +item : item, obj);
 	return obj
 }/**ajax**/
@@ -279,7 +279,7 @@ m.each = function (obj, func, item) {
 	})
 	returns RequestObject for synchronous or asynchronous use (latter only if callback is specified)
 */
-m.ajax = function (conf, xhr) {
+m['ajax'] = function (conf, xhr) {
 	xhr = new XMLHttpRequest()
 	xhr.open(conf.method || 'get', conf.url, conf.callback && (x.onreadystatechange = conf.callback), conf.user, conf.password)/**ajax-init**/
 	conf.init && conf.init(xhr)/**ajax-header**/
@@ -294,17 +294,17 @@ m.ajax = function (conf, xhr) {
 		"_": '[optional: callback name - do not use unless you know what you are doing]'
 	})
 */
-m['jsonp'] = function (conf, head, script) {
+m['jsonp'] = function (conf, head, scripttag) {
 	head = doc.getElementsByTagName('head')[0],
-	script = doc.createElement(script),
-	conf.callback && (this[conf._ = conf._ || script + 0 | i++ * new Date()] = function(){
-		head.removeChild(script)
+	scripttag = doc.createElement(script),
+	conf.callback && (window[conf._ = conf._ || script + (+new Date())] = function(){
+		head.removeChild(scripttag)
 		conf.callback.apply(this, arguments)
-		delete this[conf._]
+		delete window[conf._]
 	}),
-	script.src = conf.url.replace(/\??$/, conf._),
-	head.appendChild(script)
-	return script
+	scripttag.src = conf.url.replace(/\??$/, conf._),
+	head.appendChild(scripttag)
+	return scripttag
 }/**cookie**/
 /* Cookie
 	m.cookie([required:cookie name string]) // returns cookie if set or ''
@@ -329,7 +329,7 @@ m[cookie] = function (obj) {
 /*
 	m.url('url-string') // -> URL-object (similar to location, but o.search[key] yields value, though o.search+'' yields the full string
 */
-m.url = function (url, obj) {
+m['url'] = function (url, obj) {
 	url = (url || location.href).match(/^([^:\/\?#\.]*:?)(\/\/([^\/\?#:]*))?:?(\d*)(\.*\/[^?#]*)(\\?[^#]*)?(#.*)?$/)
 	obj = { toString: function () { return '' + obj.protocol + (obj.host != '' ? '\/\/' : '') + obj.host + obj.pathname + obj.search + obj.hash; }, 
 			search: { toString: function(result, tostring) {
@@ -348,7 +348,7 @@ m.url = function (url, obj) {
 }
 m.each(m.url(), function(value, key){ m.url[key] = value })/**useragent**/
 // useragent detection
-m.ua = function (obj, browser, ie, version) {
+m['ua'] = function (obj, browser, ie, version) {
 	obj = { ua: navigator.userAgent.toLowerCase(), info: {}, browser: {}, os: {} },
 	browser = 'browser',
 	version = 'version',
