@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -1589,7 +1588,7 @@ m(function(){
 			run: function(r, x){
 				r = '';
 				x = m.ajax({ url: 'resource.js' });
-				if (x.responseText != '(window.test || function(){})({ test: 123 });') r += 'ERROR: mismatched reply';
+				if (x.responseText.replace(/\r?\n/g,'') != '(window.test || function(){})({ test: 123 });') r += 'ERROR: mismatched reply';
 				return r || true;
 			}
 		},
@@ -1603,7 +1602,7 @@ m(function(){
 					if (this.readyState != 4) return;
 					window.clearTimeout(t);
 					r = '';
-					if (this.responseText != '(window.test || function(){})({ test: 123 });') r += 'ERROR: wrong data';
+					if (this.responseText.replace(/\r?\n/g,'') != '(window.test || function(){})({ test: 123 });') r += 'ERROR: wrong data';
 					m('#testresults div:contains(asynchronous)').html('<p>m.ajax() - asynchronous - ' + (r ? r : 'OK')+'<\/p>') } 
 				});
 				return 'waiting...'
