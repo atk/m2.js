@@ -8,3 +8,9 @@ m².js - modular micro framework (c) 2013 by Alex Kloss
 * 493b - 3.95kb bytes compressed/gzipped using Google Closure Compiler
 
 Go to http://atk.github.io/m2.js/ to build your own version now using only the modules you need.
+
+* Easily extendable/configurable
+* Minimal size
+* Simple usage through chaining (jQuery-like Syntax)
+* Variable compatibility (depending on size/features)
+* Licensed under GPLv2
