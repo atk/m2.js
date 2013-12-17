@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -279,8 +280,8 @@ m.each = function (obj, func, item) {
 	returns RequestObject for synchronous or asynchronous use (latter only if callback is specified)
 */
 m.ajax = function (conf, xhr) {
-	xhr = new XMLHttpRequest()
-	xhr.open(conf.method || 'get', conf.url, conf.callback && (x.onreadystatechange = conf.callback), conf.user, conf.password)/**ajax-init**/
+	xhr = /**ajax-ie6**/window.ActiveXObject ? new ActiveXObject('Msxml2.XMLHTTP') : /**ajax**/new XMLHttpRequest()
+	xhr.open(conf.method || 'get', conf.url, conf.callback && (xhr.onreadystatechange = conf.callback), conf.user, conf.password)/**ajax-init**/
 	conf.init && conf.init(xhr)/**ajax-header**/
 	m.each(conf.header||[], function(value, key) { xhr.setRequestHeader(key, value) })/**ajax**/
 	xhr.send(conf.data)
@@ -297,9 +298,9 @@ m.jsonp = function (conf, head, scripttag) {
 	head = doc.getElementsByTagName('head')[0],
 	scripttag = doc.createElement(script),
 	conf.callback && (window[conf._ = conf._ || script + (+new Date())] = function(){
-		head.removeChild(scripttag)
-		conf.callback.apply(this, arguments)
-		delete window[conf._]
+		head.removeChild(scripttag);
+		conf.callback.apply(this, arguments);
+		window[conf._] = undef
 	}),
 	scripttag.src = conf.url.replace(/\??$/, conf._),
 	head.appendChild(scripttag)
@@ -330,7 +331,7 @@ m[cookie] = function (obj) {
 */
 m.url = function (url, obj) {
 	url = (url || location.href).match(/^([^:\/\?#\.]*:?)(\/\/([^\/\?#:]*))?:?(\d*)(\.*\/[^?#]*)(\\?[^#]*)?(#.*)?$/)
-	obj = { toString: function () { return '' + obj.protocol + (obj.host != '' ? '\/\/' : '') + obj.host + obj.pathname + obj.search + obj.hash; }, 
+	obj = { toString: function () { return '' + obj.protocol + (obj.host != '' ? '\/\/' : '') + obj.host + obj.pathname + (obj.search ? '?' + obj.search : '') + obj.hash; }, 
 			search: { toString: function(result, tostring) {
 			result = [],
 			tostring = 'toString',
@@ -348,7 +349,7 @@ m.url = function (url, obj) {
 m.each(m.url(), function(value, key){ m.url[key] = value })/**useragent**/
 // useragent detection
 m.ua = function (obj, browser, ie, version) {
-	obj = { ua: navigator.userAgent.toLowerCase(), info: {}, browser: {}, os: {} },
+	obj = { ua: navigator.userAgent.toLowerCase(), info: {} },
 	browser = 'browser',
 	version = 'version',
 	obj.ua.replace(/[\(\)]/g, ';').replace(/\s*(\w*?\ ?\w+[\:\s]?[^\d\s;]*?)[\/\ ;](\d[.\w]*|)/g, function(_, key, value) { obj.info[key] = obj.info[key] || value || true; });
@@ -405,7 +406,7 @@ m.ua = function (obj, browser, ie, version) {
 	<li><label for="value"><input type="checkbox" name="value" id="value" value="on"> Form Value inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
 	<li><label for="selection"><input type="checkbox" name="selection" id="selection" value="on"> Selection inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
 	<li><label for="position"><input type="checkbox" name="position" id="position" value="on"> Position</label> <a href="#manipulation">[doc]</a></li>
-	<li><a href="#networking">AJAX:</a> <label for="no-ajax"><input type="radio" name="ajax" id="no-ajax" value="none" checked/> None</label> <label for="ajax-simple"><input type="radio" name="ajax" id="ajax-simple" value="simple"/> Simple</label> <label for="ajax-full"><input type="radio" name="ajax" id="ajax-full" value="full"/> With convenience loader</label> <label for="ajax-init"><input type="checkbox" name="ajax-init" id="ajax-init" value="on"/> Init Callback</label> <label for="ajax-header"><input type="checkbox" name="ajax-header" id="ajax-header" value="on"/> Header Manipulation</label></li>
+	<li><a href="#networking">AJAX:</a> <label for="no-ajax"><input type="radio" name="ajax" id="no-ajax" value="none" checked/> None</label> <label for="ajax-simple"><input type="radio" name="ajax" id="ajax-simple" value="simple"/> Simple</label> <label for="ajax-full"><input type="radio" name="ajax" id="ajax-full" value="full"/> With convenience loader</label> <label for="ajax-ie6"><input type="checkbox" name="ajax-ie6" id="ajax-ie6" value="on"/> MSIE6 Compatibility</label> <label for="ajax-init"><input type="checkbox" name="ajax-init" id="ajax-init" value="on"/> Init Callback</label> <label for="ajax-header"><input type="checkbox" name="ajax-header" id="ajax-header" value="on"/> Header Manipulation</label></li>
 	<li><label for="jsonp"><input type="checkbox" name="jsonp" id="jsonp" value="on"> JSONp</label> <a href="#networking">[doc]</a></li>
 	<li><label for="cookie"><input type="checkbox" name="cookie" id="cookie" value="on"> Cookies</label> <a href="#networking">[doc]</a></li>
 	<li><label for="url"><input type="checkbox" name="url" id="url" value="on"> URL</label> <a href="#networking">[doc]</a></li>
@@ -771,15 +772,7 @@ m(function(){
 <button id="run">Run</button>
 <script type="text/javascript">
 (function(){
-	var assert = function(assertion, result, msg) {
-		msg = msg || [];
-		if (typeof assertion !== typeof result) msg.push('types differ: '+typeof assertion+' vs. '+typeof result);
-		else if (assertion instanceof Array || assertion instanceof m || (typeof assertion == 'object' && !assertion.nodeName)) {
-			m.each(assertion, function(v, k){ assert(v, result[k], msg) });
-		} else if (assertion != result) msg.push('different result');
-		return msg.length ? msg : true
-	},
-	testfilter = function(filter, obj, args) {
+	var testfilter = function(filter, obj, args) {
 		if (typeof obj == 'string') {
 			var div = document.createElement('div');
 			div.innerHTML = obj;
@@ -1585,6 +1578,82 @@ m(function(){
 				if (!n) r += ' ERROR: empty result';
 				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
 				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'text') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: '<h3>Network tests</h3>'
+		},
+		{
+			description: 'm.ajax() - synchronous',
+			run: function(r, x){
+				r = '';
+				x = m.ajax({ url: 'resource.js' });
+				if (x.responseText != '(window.test || function(){})({ test: 123 });') r += 'ERROR: mismatched reply';
+				return r || true;
+			}
+		},
+		{
+			description: 'm.ajax() - asynchronous',
+			run: function(t){
+				t = window.setTimeout(function(){ 
+					m('#testresults div:contains(asynchronous)').html('<p>m.ajax() - asynchronous - ERROR: no reply after 10 seconds')
+				}, 10000);
+				m.ajax({ url: 'resource.js', callback: function(d){
+					if (this.readyState != 4) return;
+					window.clearTimeout(t);
+					r = '';
+					if (this.responseText != '(window.test || function(){})({ test: 123 });') r += 'ERROR: wrong data';
+					m('#testresults div:contains(asynchronous)').html('<p>m.ajax() - asynchronous - ' + (r ? r : 'OK')+'<\/p>') } 
+				});
+				return 'waiting...'
+			}
+		},
+		{
+			description: 'm.jsonp()',
+			run: function(t){
+				t = window.setTimeout(function(){ 
+					m('#testresults div:contains(m.jsonp)').html('<p>m.jsonp() - ERROR: no reply after 10 seconds')
+				}, 10000);
+				m.jsonp({ url: 'resource.js?callback=?', _: 'test', callback: function(d, r){
+					window.clearTimeout(t);
+					r = '';
+					if (!d) r += 'ERROR: no data given';
+					if (d.test != 123) r += 'ERROR: wrong data';
+					m('#testresults div:contains(m.jsonp)').html('<p>m.jsonp() - ' + (r ? r : 'OK')+'<\/p>') } 
+				});
+				return 'waiting...'
+			}
+		},
+		{
+			description: 'm.cookie() - set/get',
+			run: function(r){
+				r = '';
+				m.cookie({ name: 'testcookie', value: 'set' });
+				if (m.cookie('testcookie') != 'set') r += 'ERROR: cookie could not be set/gotten';
+				m.cookie({ name: 'testcookie', value: 'unset', date: -1 });
+				if (m.cookie('testcookie')) r+= 'ERROR: cookie could not be unset (using negative expiry date)';
+				return r || true
+			}
+		},
+		{
+			description: 'm.url()',
+			run: function(r, n, url){
+				r = '';
+				url = 'https://host.name:8080/path/directories/filename.ext?foo=bar&abc=xyz#hash'
+				n = m.url(url);
+				if (!n) r += ' ERROR: empty result';
+				if (n.base != '//host.name') r += ' ERROR: wrong base';
+				if (n.hash != '#hash') r += 'ERROR: hash erroneous';
+				if (n.host != 'host.name:8080') r += 'ERROR: host incorrect';
+				if (n.hostname != 'host.name') r += 'ERROR: hostname wrong';
+				if (n.href != url) r += 'ERROR: href changed';
+				if (n.pathname != '/path/directories/filename.ext') r += 'ERROR: wrong pathname';
+				if (n.port != '8080') r += 'ERROR: port detection failed';
+				if (n.protocol != 'https:') r += ' ERROR: protocol mismatch';
+				if (n.search != 'foo=bar&abc=xyz') r += ' ERROR: search toString erroneous';
+				if (n.search.foo != 'bar' || n.search.abc != 'xyz') r += 'ERROR: search variable mismatch';
+				if (n != url) r += ' ERROR: toString failed';
 				return r || true
 			}
 		}
