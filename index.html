@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -44,10 +45,9 @@ m[proto] = {
 	// basic length
 	length: 0,
 	// initialisation for everything but functions or DOM queries
-	i: function (query, obj, idx) {
-		obj = (query || 0).nodeName ? [query] : [];
-		if (query && 1 + query[length]) { for (idx = -1; query[++idx] && obj.push(query[idx]);); }
-		array.push.apply(this, obj)
+	i: function (query, idx) {
+		query = !query ? [] : query.nodeName || query.window === query ? [query] : query
+		for (idx = 0; idx < query[length];) this[this[length]++] = query[idx++];
 	},
 	// DOMready
 	ready: function (func/**elementready**/, base/**/) { (function t(){ /**elementready**/(base ? m(base)[length] : /**//c/.test(doc.readyState)/**elementready**/)/**/ ? func() : setTimeout(t, 99) })() },
@@ -65,11 +65,11 @@ m[proto] = {
 		return m(result)
 	},
 	// DOM (sub)query
-	find: function (query/**query-full**/, selection, nodes, base, err/**/) { /**query-full**/
+	find: function (query/**query-full**/, selected, nodes, base, dom, err/**/) { /**query-full**/
 		try {
 			/**/return this.filter(function (node){ return node.querySelectorAll(query) }) /**query-full**/
 		} catch (e) {
-			selection = [], base = this, nodes = m(base), regex.lastIndex = 0;
+			selected = m([]), base = this, dom = base.filter(m.s[' ']()), nodes = m(dom), regex.lastIndex = 0;
 			/*
 				CSS3 Selector RegExp (matches a-f)
 				a=[>~* +,] (traversal),
@@ -79,37 +79,36 @@ m[proto] = {
 				e=attribute value
 				f=pseudo value
 			*/
-			(' '+query+',').replace(regex, function (_, a, b, c, d, e, f) {
-				_ && (a == ',' ? (nodes.each(function (node) { selection.push(node) }), nodes = m(base)) : (a = m.s[b == ':' ? c : b || a || '']) ?
+			(query+',').replace(regex, function (_, a, b, c, d, e, f) {
+				_ && (a == ',' ? (selected.i(nodes), nodes = m(dom)) : (a = m.s[b == ':' ? c : b || a || '']) ?
 					(a = a.call(nodes, f || c, d, e, base)) ? (nodes = nodes.filter(a)) : (err = 'filter call failed: ') : (err = 'no matching filter found: '))
 				if (err) throw err + _
 			})
-			return m(selection).filter()
+			return selected.filter()
 		}
 	/**/}/**events**/,
 	// DOM event binding
 	on: function (type, callback) {
-		return this.each(function (node, handler, addEvent) {
-			handler = m[proto].trigger
+		return this.each(function (node, addEvent, trigger) {
+			node[trigger = '_trigger'] = node[trigger] || function() { m[proto].trigger.apply(node, arguments) }
 			node['_' + type] ? node['_' + type].push(callback) : (node['_' + type] = [callback], 
-				node[addEvent = 'addEventListener'] ? node[addEvent](type, handler) : node.attachEvent('on' + type, handler))
+				node[addEvent = 'addEventListener'] ? node[addEvent](type, node[trigger]) : node.attachEvent('on' + type, node[trigger]))
 		})
 	},
 	// DOM event unbinding
 	off: function (type, callback) {
-		return this.each(function (node, handler, removeEvent) {
-			handler = m[proto].trigger
-			node['_' + type] = callback && m[proto].filter.call(node['_' + type], function () { return this != callback })
-			if (!(node['_' + type] || 0)[length]) node[removeEvent = 'removeEventListener'] ? node[removeEvent](type, handler) : node.detachEvent('on' + type, handler)
+		return this.each(function (node, removeEvent) {
+			m.each(node['_' + type], function (func, idx, handler) { func == callback && handler.splice(idx,1) })
+			if (!(node['_' + type] || 0)[length]) node[removeEvent = 'removeEventListener'] ? node[removeEvent](type, node._trigger) : node.detachEvent('on' + type, node._trigger)
 		})
 	},
 	// Event chain trigger
 	trigger: function (event, result) {
-		event = event || window.event
-		event = event.type ? event : { type: event }
-		event.target || (event.target = event.srcElement)
-		return this instanceof m ? this.each(function(node){ m[p].trigger.call(node, event) }) :
-			(m.each((node = event.srcElement || this)['_'+event.type], function(callback){ result = callback.call(node, event) === false && result }), !result)
+		event = event || window.event;
+		event = event.type ? event : { type: event };
+		event.target || (event.target = event.srcElement);
+		return this instanceof m ? this.each(function(node){ m[proto].trigger.call(node, event) }) :
+			(m.each((node = this)['_'+event.type], function(callback){ result = callback.call(node, event) === false && result }), !result)
 	}/**html**/,
 	// read/write HTML
 	html : function(html){ return html === undef ? this[0].innerHTML : this.each(function (node) { node.innerHTML = html }) }/**attr**/,
@@ -280,7 +279,7 @@ m.each = function (obj, func, item) {
 */
 m.ajax = function (conf, xhr) {
 	xhr = /**ajax-ie6**/window.ActiveXObject ? new ActiveXObject('Msxml2.XMLHTTP') : /**ajax**/new XMLHttpRequest()
-	xhr.open(conf.method || 'get', conf.url, conf.callback && (xhr.onreadystatechange = conf.callback), conf.user, conf.password)/**ajax-init**/
+	xhr.open(conf.method || 'get', conf.url, !!(conf.callback && (xhr.onreadystatechange = conf.callback)), conf.user, conf.password)/**ajax-init**/
 	conf.init && conf.init(xhr)/**ajax-header**/
 	m.each(conf.header||[], function(value, key) { xhr.setRequestHeader(key, value) })/**ajax**/
 	xhr.send(conf.data)
@@ -357,7 +356,8 @@ m.ua = function (obj, browser, ie, version) {
 		obj.info[name] && (obj[node] = obj[node] || { name: name == 'opr' ? 'opera' : name == 'chrome' && +obj.info[version] == 1 ? 'native' : name, version: (+digit ? obj.info[version] : 0) || obj.info[name] },
 			obj[node][obj[node].name] = parseFloat(obj[node][version]) || obj[node][version])
 	});
-	(ie = +obj.info.trident + 4) && (obj[browser].renderMode = obj.info[obj[browser].name = 'msie'], obj[browser].msie = obj[browser][version] = ie);
+	(ie = +obj.info.trident + 4) && (obj[browser] = { name: 'msie', msie: ie, renderMode: obj.info.msie, version: ie });
+;
 	return obj
 }()/**/
 }(
@@ -372,14 +372,21 @@ m.ua = function (obj, browser, ie, version) {
 	/\s*([,>~* +])\s*|([#.:[]?)([0-9A-Za-z-_]+)(?:([*\|\~\^\$!]?=)([^\]]+)\]|\(([^)]*)\)|)/g/**/
 );
 </script>
+<script>
+window.startTime = +new Date();
+window.readyTime = false;
+window.loadTime = false;
+m(function(){readyTime = +new Date()});
+m(window).on('load', function(){loadTime=+new Date()});
+</script>
 </head>
 <body>
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework</p>
 <ul>
-<li>2kb - 17.7kb commented/uncompressed</li>
-<li>817b - 9.63kb bytes compressed using Google Closure Compiler</li>
-<li>501b - 4.03kb bytes compressed/gzipped using Google Closure Compiler</li>
+<li>2kb - 17.75kb commented/uncompressed</li>
+<li>801b - 9.69kb bytes compressed using Google Closure Compiler</li>
+<li>492b - 4.07kb bytes compressed/gzipped using Google Closure Compiler</li>
 </ul>
 <p>&copy; 2013 Alex Kloss.</p>
 <h2>Features</h2>
@@ -472,8 +479,13 @@ m(function(){
 </script>
 <h2>TODO</h2>
 <ul>
+	<li>Bugfixes
+		<ul>
+			<li>IE9/older: asynchronous ajax/m.jsonp work</li>
+		</ul>
+	</li>
 	<li>More/Improved Documentation</li>
-	<li>Test Suite for events, elementready, html, attr, css, val, pos, jsonp, cookies, url</li>
+	<li>Test Suite for html, attr, css, val, pos</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
 	<li>Additional functionality (as modules)
 		<ul>
@@ -771,7 +783,8 @@ m(function(){
 <button id="run">Run</button>
 <script type="text/javascript">
 (function(){
-	var testfilter = function(filter, obj, args) {
+var now = window.startTime, ready = window.readyTime, load,
+	testfilter = function(filter, obj, args) {
 		if (typeof obj == 'string') {
 			var div = document.createElement('div');
 			div.innerHTML = obj;
@@ -784,7 +797,7 @@ m(function(){
 	},
 	tests = [
 		{
-			description: '<h3>Iterator tests</h3>'
+			description: '<h3>Iterator/Filter tests</h3>'
 		},
 		{
 			description: 'array iterator',
@@ -813,6 +826,45 @@ m(function(){
 					if (+n !== n || n < 0 || n > 3) r += ' ERROR: element outside object';
 					if (parseInt(i, 36) - 9 != n) r += ' ERROR: element/index mismatch';
 				}) == c || (r += ' ERROR: wrong/missing return value');
+				return r || true;
+			}
+		},
+		{
+			description: 'selection iterator',
+			run: function(r, c){
+				c = document.createElement('div'),
+				r = '';
+				c.innerHTML = '<span><\/span><i><\/i><img/><div><\/div>';
+				c = m('*', c);
+				c.each(function(n, i){
+					if (!n) r += ' ERROR: empty/false element';
+					if (n != this) r += ' ERROR: this/arg[0] differ';
+					if (+i !== i || i < 0 || i > 3) r += ' ERROR: element outside object';
+					if (i == 0 && n.nodeName.toLowerCase() != 'span') r += ' ERROR: element/index mismatch';
+					if (i == 1 && n.nodeName.toLowerCase() != 'i') r += ' ERROR: element/index mismatch';
+					if (i == 2 && n.nodeName.toLowerCase() != 'img') r += ' ERROR: element/index mismatch';
+					if (i == 3 && n.nodeName.toLowerCase() != 'div') r += ' ERROR: element/index mismatch';
+				}) == c || (r += ' ERROR: wrong/missing return value');
+				return r || true;
+			}
+		},
+		{
+			description: 'selection filter',
+			run: function(r, c){
+				c = document.createElement('div'),
+				r = '';
+				c.innerHTML = '<span><\/span><i><\/i><img/><div><\/div>';
+				c = m('*', c);
+				c.filter(function(n, i){
+					if (!n) r += ' ERROR: empty/false element';
+					if (n != this) r += ' ERROR: this/arg[0] differ';
+					if (+i !== i || i < 0 || i > 3) r += ' ERROR: element outside object';
+					if (i == 0 && n.nodeName.toLowerCase() != 'span') r += ' ERROR: element/index mismatch';
+					if (i == 1 && n.nodeName.toLowerCase() != 'i') r += ' ERROR: element/index mismatch';
+					if (i == 2 && n.nodeName.toLowerCase() != 'img') r += ' ERROR: element/index mismatch';
+					if (i == 3 && n.nodeName.toLowerCase() != 'div') r += ' ERROR: element/index mismatch';
+					return i == 2;
+				}).length == 1 || (r += ' ERROR: wrong/missing return value');
 				return r || true;
 			}
 		},
@@ -1276,7 +1328,7 @@ m(function(){
 			}
 		},
 		{
-			description: ':nth-of-type() (2/3)',
+			description: ':nth-last-of-type() (2/3)',
 			run: function(r, n){
 				r = '';
 				n = testfilter(m.s['nth-last-of-type']('3n+2'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
@@ -1289,7 +1341,7 @@ m(function(){
 			}
 		},
 		{
-			description: ':nth-of-type() (3/3)',
+			description: ':nth-last-of-type() (3/3)',
 			run: function(r, n){
 				r = '';
 				n = testfilter(m.s['nth-last-of-type']('4n-1'), '<span><\/span><span><\/span><span><\/span><div><\/div><ul><li><\/li><li><\/li><\/ul><div><\/div><a><\/a><img/><div><\/div>');
@@ -1581,6 +1633,36 @@ m(function(){
 			}
 		},
 		{
+			description: '<h3>Event tests</h3>'
+		},
+		{
+			description: 'DOMready/load',
+			run: function(r){
+				r = '';
+				if (!startTime) r += ' ERROR: starting time not saved';
+				if (!readyTime) r += ' ERROR: DOMready time not saved';
+				if (!loadTime) r += ' ERROR: onload time not saved';
+				if (startTime >= readyTime) r += ' ERROR: ready event fired too soon';
+				if (readyTime >= loadTime) r += ' WARNING: onload event fired before DOMready Event (when no images are involved, this is quite common)';
+				return r || true
+			}
+		},
+		{
+			description: 'ElementReady',
+			run: function(r, e){
+				r = '';				
+				e = document.createElement('span');
+				m(function(){
+					if (document.getElementById('elementReadyTest')) 
+						m('#testresults div:contains(ElementReady)').html('<p>ElementReady: ' + (r ? r : 'OK')+'<\/p>');
+					document.body.removeChild(e);
+				}, '#elementReadyTest');
+				e.id = 'elementReadyTest';
+				document.body.appendChild(e);
+				return 'waiting...'
+			}
+		},
+		{
 			description: '<h3>Network tests</h3>'
 		},
 		{
@@ -1588,7 +1670,8 @@ m(function(){
 			run: function(r, x){
 				r = '';
 				x = m.ajax({ url: 'resource.js' });
-				if (x.responseText.replace(/\r?\n/g,'') != '(window.test || function(){})({ test: 123 });') r += 'ERROR: mismatched reply';
+				if (x.readyState != 4) r += ' ERROR: wrong readyState (' + x.readyState + ' != 4)';
+				if (x.responseText.replace(/\r?\n/g,'') != '(window.test || function(){})({ test: 123 });') r += ' ERROR: mismatched reply';
 				return r || true;
 			}
 		},
@@ -1602,8 +1685,8 @@ m(function(){
 					if (this.readyState != 4) return;
 					window.clearTimeout(t);
 					r = '';
-					if (this.responseText.replace(/\r?\n/g,'') != '(window.test || function(){})({ test: 123 });') r += 'ERROR: wrong data';
-					m('#testresults div:contains(asynchronous)').html('<p>m.ajax() - asynchronous - ' + (r ? r : 'OK')+'<\/p>') } 
+					if (this.responseText.replace(/\r?\n/g,'') != '(window.test || function(){})({ test: 123 });') r += ' ERROR: wrong data';
+					m('#testresults div:contains(asynchronous)').html('<p>m.ajax() - asynchronous: ' + (r ? r : 'OK')+'<\/p>') } 
 				});
 				return 'waiting...'
 			}
@@ -1612,14 +1695,14 @@ m(function(){
 			description: 'm.jsonp()',
 			run: function(t){
 				t = window.setTimeout(function(){ 
-					m('#testresults div:contains(m.jsonp)').html('<p>m.jsonp() - ERROR: no reply after 10 seconds')
+					m('#testresults div:contains(m.jsonp)').html('<p>m.jsonp(): ERROR: no reply after 10 seconds')
 				}, 10000);
 				m.jsonp({ url: 'resource.js?callback=?', _: 'test', callback: function(d, r){
 					window.clearTimeout(t);
 					r = '';
 					if (!d) r += 'ERROR: no data given';
 					if (d.test != 123) r += 'ERROR: wrong data';
-					m('#testresults div:contains(m.jsonp)').html('<p>m.jsonp() - ' + (r ? r : 'OK')+'<\/p>') } 
+					m('#testresults div:contains(m.jsonp)').html('<p>m.jsonp(): ' + (r ? r : 'OK')+'<\/p>') } 
 				});
 				return 'waiting...'
 			}
