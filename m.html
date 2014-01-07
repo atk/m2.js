@@ -278,8 +278,8 @@ m.each = function (obj, func, item) {
 	returns RequestObject for synchronous or asynchronous use (latter only if callback is specified)
 */
 m.ajax = function (conf, xhr) {
-	xhr = /**ajax-ie6**/window.ActiveXObject ? new ActiveXObject('Msxml2.XMLHTTP') : /**ajax**/new XMLHttpRequest()
-	xhr.open(conf.method || 'get', conf.url, !!(conf.callback && (xhr.onreadystatechange = conf.callback)), conf.user, conf.password)/**ajax-init**/
+	xhr = /**ajax-ie6**/!window.XMLHttpRequest && window.ActiveXObject ? new ActiveXObject('Microsoft.XMLHTTP') : /**ajax**/new XMLHttpRequest()
+	xhr.open(conf.method || 'get', conf.url, !!(conf.callback && (xhr.onreadystatechange = /**ajax-ie6**/function(){/**ajax**/conf.callback/**ajax-ie6**/.call(xhr)}/**ajax**/)), conf.user, conf.password)/**ajax-init**/
 	conf.init && conf.init(xhr)/**ajax-header**/
 	m.each(conf.header||[], function(value, key) { xhr.setRequestHeader(key, value) })/**ajax**/
 	xhr.send(conf.data)
@@ -479,11 +479,6 @@ m(function(){
 </script>
 <h2>TODO</h2>
 <ul>
-	<li>Bugfixes
-		<ul>
-			<li>IE9/older: asynchronous ajax/m.jsonp work</li>
-		</ul>
-	</li>
 	<li>More/Improved Documentation</li>
 	<li>Test Suite for html, attr, css, val, pos</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
@@ -1702,7 +1697,8 @@ var now = window.startTime, ready = window.readyTime, load,
 					r = '';
 					if (!d) r += 'ERROR: no data given';
 					if (d.test != 123) r += 'ERROR: wrong data';
-					m('#testresults div:contains(m.jsonp)').html('<p>m.jsonp(): ' + (r ? r : 'OK')+'<\/p>') } 
+					// older ie versions are too slow with adding to the dom, so we use a small timeout to write the result
+					window.setTimeout(function(){ m('#testresults div:contains(m.jsonp)').html('<p>m.jsonp(): ' + (r ? r : 'OK')+'<\/p>') }, 100); } 
 				});
 				return 'waiting...'
 			}
