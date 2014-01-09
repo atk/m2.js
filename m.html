@@ -32,7 +32,7 @@ pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 .f6 {color:#000;}
 </style>
 <script type="text/javascript">
-// m² 0.0.2 - modular JS micro framework (c) 2013 by Alex Kloss
+// m² 0.0.3 - modular JS micro framework (c) 2013-2014 by Alex Kloss
 !function (doc, proto/**query-full**/, getElementsByTagName/**jsonp**/, script/**/, length, array/**cookie**/, cookie, escape/**query-full**/, regex/**/, undef) {
 /*
 	Initialisation:
@@ -133,13 +133,13 @@ m[proto] = {
 	// has/add/remove/toggle class names (convenience functions below)
 	cls: function (action, name, has, search) {
 		action = action == 'has' ? 0 : action
-		search = eval('/\\b' + n + '\\b/g')
+		search = eval('/\\b' + name + '\\s+/g')
 		this.each(function (node, className, without, within) {
 			search.lastIndex = 0
 			without = node[className = 'className'].replace(search, '')
 			within = without != node[className]
 			has = has || within
-			action && (node[className] = without + { add: 1, toggle: !within }[action] ? ' ' + name : '')
+			action && (node[className] = without + ({ add: 1, toggle: !within }[action] ? ' ' + name : ''))
 		})
 		return action ? this : has
 	}/**value**/,
@@ -382,13 +382,13 @@ m(window).on('load', function(){loadTime=+new Date()});
 </head>
 <body>
 <h1>m².js - modular micro framework</h1>
-<p>Modular microframework</p>
+<p>Modular microframework &copy; 2013-2014 Alex Kloss.</p>
 <ul>
-<li>2kb - 17.75kb commented/uncompressed</li>
-<li>801b - 9.69kb bytes compressed using Google Closure Compiler</li>
-<li>492b - 4.07kb bytes compressed/gzipped using Google Closure Compiler</li>
+<li>2kb - 17.81kb commented/uncompressed</li>
+<li>801b - 9.74kb bytes compressed using Google Closure Compiler*</li>
+<li>492b - 4.09kb bytes compressed/gzipped using Google Closure Compiler*</li>
 </ul>
-<p>&copy; 2013 Alex Kloss.</p>
+<p>WARNING: Google's Closure Compiler breaks stuff in advanced mode; also the resulting gzipped code is actually bigger in most cases.</p>
 <h2>Features</h2>
 <ul>
 	<li><input type="checkbox" id="basic" value="on" disabled="disabled" style="display:none" checked/>Basic Framework: Main Object, <a href="#domevents">DOMready</a>, <a href="#iterator">Iterator</a>
@@ -480,8 +480,8 @@ m(function(){
 <h2>TODO</h2>
 <ul>
 	<li>More/Improved Documentation</li>
-	<li>Test Suite for html, attr, css, val, pos</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
+	<li>Test Suite for pos, sel?</li>
 	<li>Additional functionality (as modules)
 		<ul>
 			<li>serialize (as optional part of (.val)?)</li>
@@ -769,6 +769,17 @@ m(function(){
 			<li>ua: navigator.userAgent.toLowerCase() // <script type="text/javascript">document.write(m.ua.ua);</script></li>
 		</ul>
 	</li>
+</ul>
+<h2>Compatibility (if restricted)</h2>
+<ul>
+	<li>Selectors:
+		<ul>
+			<li>Basic: IE8+, FF3.5+, Chrome, Safari, Opera10+, iOS, Android</li>
+			<li>Full: IE6+, FF2+, Chrome, Safari, Opera9+, iOS, Android</li>
+		</ul>
+	</li>
+	<li>AJAX: IE6+ (with compatibility module), otherwise IE7+, FF, Chrome, Safari, Opera, iOS, Android</li>
+	<li>Everything else: IE6+, FF, Chrome, Safari, Opera, iOS, Android</li>
 </ul>
 <h2>Tests</h2>
 <style>
@@ -1624,6 +1635,108 @@ var now = window.startTime, ready = window.readyTime, load,
 				if (!n) r += ' ERROR: empty result';
 				if (n.length != 1) r += ' ERROR: wrong number of matched elements';
 				if (((n[0] || 0).nodeName || '').toLowerCase() != 'input' && (n[0] || 0).type != 'text') r += ' ERROR: wrong element matched'
+				return r || true
+			}
+		},
+		{
+			description: '<h3>Inspection/Manipulation tests</h3>'
+		},
+		{
+			description: '.attr reading/writing',
+			run: function(r, d){
+				r = '';
+				d = document.createElement('div');
+				d.innerHTML = '<span data-attr-works="true"><\/span>';
+				if (m('span', d).attr('data-attr-works') !== "true") {
+					r += ' ERROR: data attribute could not be read'
+				}
+				m('span', d).attr('data-test', 'test');
+				if (d.getElementsByTagName('span')[0].getAttribute('data-test') !== 'test') {
+					r += ' ERROR: data attribute could not be set'
+				}
+				m('span', d).attr({"data-test1": "1", "data-test2": "2"});
+				if (d.getElementsByTagName('span')[0].getAttribute('data-test1') !== '1' || 
+					d.getElementsByTagName('span')[0].getAttribute('data-test2') !== '2') {
+					r += ' ERROR: multiple data attribute could not be set'
+				}
+				return r || true
+			}
+		},
+		{
+			description: '.css reading/writing',
+			run: function(r, d){
+				r = '';
+				d = document.createElement('div');
+				d.innerHTML = '<span class="f-1" style="display:none;">test<\/span>';
+				document.body.appendChild(d);
+				if (m('span', d).css('display') !== "none") {
+					r += ' ERROR: inline style could not be read'
+				}
+				if (!/#092|#009922|rgb\(0,\s*153,\s*34\)/.test(m('span', d).css('color'))) {
+					r += ' ERROR: external style could not be read'
+				}
+				m('span', d).css('display', 'inline');
+				if (d.getElementsByTagName('span')[0].style.display !== 'inline') {
+					r += ' ERROR: style attribute could not be set'
+				}
+				m('span', d).css({display: 'none', visibility: 'hidden'});
+				if (d.getElementsByTagName('span')[0].style.display !== 'none' ||
+					d.getElementsByTagName('span')[0].style.visibility !== 'hidden') {
+					r += ' ERROR: multiple style attribute could not be set'
+				}
+				document.body.removeChild(d);
+				return r || true
+			}
+		},
+		{
+			description: '.html reading/writing',
+			run: function(r, d) {
+				r = '';
+				d = document.createElement('div');
+				d.innerHTML = 'test';
+				if (m(d).html() !== 'test')
+					r += ' ERROR: html content could not be read correctly';
+				m(d).html('another test');
+				if (d.innerHTML !== 'another test')
+					r += ' ERROR: html content could not be set correctly';
+				return r || true
+			}
+		},
+		{
+			description: '.val reading/writing',
+			run: function(r, d, i) {
+				r = '';
+				d = document.createElement('div');
+				d.innerHTML = '<input type="text" name="test" value="test"/>';				
+				i = d.getElementsByTagName('input')[0];
+				if (m(i).val() !== 'test')
+					r += ' ERROR: value could not be read correctly';
+				m(i).val('another test');
+				if (i.value !== 'another test')
+					r += ' ERROR: value could not be set correctly';
+				return r || true
+			}
+		},
+		{
+			description: '.class has/add/remove/toggle',
+			run: function(r, d) {
+				r = '';
+				d = document.createElement('div');
+				d.className = 'test foobar';
+				if (!m(d).hasClass('test'))
+					r += ' ERROR: className could not be read correctly';
+				m(d).addClass('test2');
+				if (d.className !== 'test foobar test2')
+					r += ' ERROR: adding a class name failed';
+				m(d).removeClass('foobar');
+				if (d.className !== 'test test2')
+					r += ' ERROR: removing a class name did not work as intended';
+				m(d).toggleClass('test');
+				if (d.className !== 'test2')
+					r += ' ERROR: removing a class name through toggle failed';
+				m(d).toggleClass('foobar');
+				if (d.className !== 'test2 foobar')
+					r += ' ERROR: failed adding a class name by toggle';
 				return r || true
 			}
 		},
