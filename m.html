@@ -32,7 +32,7 @@ pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 .f6 {color:#000;}
 </style>
 <script type="text/javascript">
-// m² 0.0.3 - modular JS micro framework (c) 2013-2014 by Alex Kloss
+// m² 0.0.4 - modular JS micro framework (c) 2013-2014 by Alex Kloss
 !function (doc, proto/**query-full**/, getElementsByTagName/**jsonp**/, script/**/, length, array/**cookie**/, cookie, escape/**query-full**/, regex/**/, undef) {
 /*
 	Initialisation:
@@ -91,15 +91,15 @@ m[proto] = {
 	on: function (type, callback) {
 		return this.each(function (node, addEvent, trigger) {
 			node[trigger = '_trigger'] = node[trigger] || function() { m[proto].trigger.apply(node, arguments) }
-			node['_' + type] ? node['_' + type].push(callback) : (node['_' + type] = [callback], 
-				node[addEvent = 'addEventListener'] ? node[addEvent](type, node[trigger]) : node.attachEvent('on' + type, node[trigger]))
+			type.replace(/\w+/g, function (name) { node['_' + name] ? node['_' + name].push(callback) : (node['_' + name] = [callback], 
+				node[addEvent = 'addEventListener'] ? node[addEvent](name, node[trigger]) : node.attachEvent('on' + name, node[trigger])) });
 		})
 	},
 	// DOM event unbinding
 	off: function (type, callback) {
 		return this.each(function (node, removeEvent) {
-			m.each(node['_' + type], function (func, idx, handler) { func == callback && handler.splice(idx,1) })
-			if (!(node['_' + type] || 0)[length]) node[removeEvent = 'removeEventListener'] ? node[removeEvent](type, node._trigger) : node.detachEvent('on' + type, node._trigger)
+			type.replace(/\w+/g, function (name) { m.each(node['_' + name], function (func, idx, handler) { func == callback && handler.splice(idx,1) })
+			if (!(node['_' + name] || 0)[length]) node[removeEvent = 'removeEventListener'] ? node[removeEvent](name, node._trigger) : node.detachEvent('on' + name, node._trigger) })
 		})
 	},
 	// Event chain trigger
@@ -384,8 +384,8 @@ m(window).on('load', function(){loadTime=+new Date()});
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework &copy; 2013-2014 Alex Kloss.</p>
 <ul>
-<li>2kb - 17.81kb commented/uncompressed</li>
-<li>801b - 9.74kb bytes compressed using Google Closure Compiler*</li>
+<li>2kb - 17.9kb commented/uncompressed</li>
+<li>801b - 9.8kb bytes compressed using Google Closure Compiler*</li>
 <li>492b - 4.09kb bytes compressed/gzipped using Google Closure Compiler*</li>
 </ul>
 <p>WARNING: Google's Closure Compiler breaks stuff in advanced mode; also the resulting gzipped code is actually bigger in most cases.</p>
@@ -395,10 +395,10 @@ m(window).on('load', function(){loadTime=+new Date()});
 		<ul>
 			<li>Easily extendable</li>
 			<li>Minimal size</li>
-			<li>Simple usage through chaining</li>
-			<li>jQuery-like syntax</li>
+			<li>Simple usage through chaining, jQuery-like syntax</li>
 			<li>Variable Compatibility (depending on size/features)</li>
 			<li>Speaking variable names allow for easy understanding and adaption</li>
+			<li>Tests for most of the functionality</li>
 			<li>Licensed under GPLv2</li>
 		</ul>
 	</li>
@@ -482,11 +482,14 @@ m(function(){
 	<li>More/Improved Documentation</li>
 	<li>More modular control over selectors (maybe even additional selectors)</li>
 	<li>Test Suite for pos, sel?</li>
+	<li>Multiple events in one call, one-time-events</li>
 	<li>Additional functionality (as modules)
 		<ul>
 			<li>serialize (as optional part of (.val)?)</li>
 			<li>.live() Events</li>
 			<li>.post() requests</li>
+			<li>.route</li>
+			<li>.render (Templates)</li>
 			<li>?</li>
 		</ul>
 	</li>
