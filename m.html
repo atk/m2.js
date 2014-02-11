@@ -40,7 +40,7 @@ pre, pre * { font: 12px monospace; white-space: pre-wrap; tab-size: 4; }
 	- DOM queries vs. other functions (handled via "i"nit method)
 	m([DOM query, Array, DOM node, onready callback function], [opt: DOM query base])
 */
-m = function (query, base) { return this instanceof m ? '' + query === query ? /**query-performance**/(!base && (base = /^#(\S+)$|^\[name=([^\]]+)\]$|^([a-zA-Z]+)$/.exec(query))) ? this.i(document['getElement' + (base[1] ? 'ById' : base[2] ? 'sByName' : 'sByTagName')](base[1] || base[2] || base[3])) :/**/m(base || doc).find(query) : /^f/.test(typeof query) ? m().ready(query/**elementready**/, base/**/) : this.i(query) : new m(query, base) }
+m = function (query, base) { return this instanceof m ? '' + query === query ? /**query-html**//^<\w+.*>$/.test(query) ? (base = (base ? base.ownerDocument : doc).createElement('a'), base.innerHTML = query, m(base.childNodes)) : /**query-performance**/(!base && (base = /^#(\S+)$|^\[name=([^\]]+)\]$|^([a-zA-Z]+)$/.exec(query))) ? this.i(document['getElement' + (base[1] ? 'ById' : base[2] ? 'sByName' : 'sByTagName')](base[1] || base[2] || base[3])) :/**/m(base || doc).find(query) : /^f/.test(typeof query) ? m().ready(query/**elementready**/, base/**/) : this.i(query) : new m(query, base) }
 m[proto] = {
 	// basic length
 	length: 0,
@@ -88,7 +88,9 @@ m[proto] = {
 		}
 	/**/}/**events**/,
 	// DOM event binding
-	on: function (type, callback) {
+	on: function (type, callback/**events-once**/, once/**events**/) {/**events-once**/
+		once && (callback.once = true);/**events-multi**/
+		if (/\s+/.test(type)) { type.replace(/\S+/, function(name){ this.on(name, callback, once) }); return this }/**events**/
 		return this.each(function (node, addEvent, trigger) {
 			node[trigger = '_trigger'] = node[trigger] || function() { m[proto].trigger.apply(node, arguments) }
 			type.replace(/\w+/g, function (name) { node['_' + name] ? node['_' + name].push(callback) : (node['_' + name] = [callback], 
@@ -96,7 +98,8 @@ m[proto] = {
 		})
 	},
 	// DOM event unbinding
-	off: function (type, callback) {
+	off: function (type, callback) {/**events-multi**/
+		if (/\s+/.test(type)) { type.replace(/\S+/, function(name){ this.off(name, callback, once) }); return this }/**events**/
 		return this.each(function (node, removeEvent) {
 			type.replace(/\w+/g, function (name) { m.each(node['_' + name], function (func, idx, handler) { func == callback && handler.splice(idx,1) })
 			if (!(node['_' + name] || 0)[length]) node[removeEvent = 'removeEventListener'] ? node[removeEvent](name, node._trigger) : node.detachEvent('on' + name, node._trigger) })
@@ -108,8 +111,23 @@ m[proto] = {
 		event = event.type ? event : { type: event };
 		event.target || (event.target = event.srcElement);
 		return this instanceof m ? this.each(function(node){ m[proto].trigger.call(node, event) }) :
-			(m.each((node = this)['_'+event.type], function(callback){ result = callback.call(node, event) === false && result }), !result)
-	}/**html**/,
+			(m.each((node = this)['_'+event.type], function(callback){ 
+				result = callback.call(node, event) === false && result;/**events-once**/
+				callback.once && $(this).off(event.type, callback);/**events**/
+			}), !result)
+	}/**ins**/,
+	ins: function(reference, after, idx) {
+		reference = m(reference)[0];
+		if (after) {
+			for (idx = reference; (idx = idx.nextSibling) && idx.nodeType != 1;);
+			idx && (after = !(reference = idx))
+		}
+		if (after) return this.each(function() { reference.parentNode.appendChild(this) });
+		for (idx = this.length; idx--; reference.parentNode.insertBefore(this[idx], reference));
+		return this;
+	}/**ins-convenience**/,
+	before: function(reference) { return this.ins(reference) },
+	after: function(reference) { return this.ins(reference, true) }/**html**/,
 	// read/write HTML
 	html : function(html){ return html === undef ? this[0].innerHTML : this.each(function (node) { node.innerHTML = html }) }/**attr**/,
 	// get/set Attributes
@@ -188,21 +206,24 @@ m[proto] = {
 })/**query-full**/
 // Selector functions: each returns a function that will be used to filter the output (re-use where possible and reasonable)
 m.s = {
+	// CSS 1 selectors
+	'#': function (id) { return function (node) { return node.id == id } },
+	'.': function (classname) { return function (node) { return (' ' + node.className + ' ').indexOf(' ' + classname + ' ') > -1 } },
+	'': function (tagname) { return function (node) { return node.nodeName.toLowerCase() == tagname.toLowerCase() } },	
+	'*': function () { return function (node) { return node[getElementsByTagName] && node[getElementsByTagName]('*') } }/**query-css2**/,
+	// CSS 2 selectors
 	'[': function (key, comparison, value, flags) {
 		value = comparison ? eval('/' + ({'|=': '\\b', '~=': '\\b', '=': '^', '!=': '^'}[comparison] || '') +
-			((value || '').replace(/[.+*()]/g, '\\\1') || '.+') +
+			((value || '').replace(/[.+*()]/g, '\\$1') || '.+') +
 			({'|=': '(-|$)', '~=': '\\b', '=': '$', '!=': '$'}[comparison] || '') + '/' + (flags || '')) : /.+/;
 		return function(node){ return !!(value.test(node[key] || (typeof node.getAttribute == 'function' && node.getAttribute(key)) || '') ^ (comparison == '!=')) };
 	},
-	'#': function (id) { return function (node){ return node.id == id } },
-	'.': function (classname) { return m.s['[']('className', '~=', classname) },
-	'': function (tagname) { return m.s['[']('nodeName', '=', tagname, 'i') },
-	'*': function () { return function (node) { return node[getElementsByTagName] && node[getElementsByTagName]('*') } },
 	'>': function () { return function (nodes, result, idx) {
 		for (result = [], nodes = nodes.childNodes, idx = 0; nodes[idx]; idx++) nodes[idx].nodeType == 1 && result.push(nodes[idx]);
 		return result }
 	},
-	'+': function () { return function (node) { for (;node = node.nextSibling;) if ((node||0).nodeType == 1) return [node] } },
+	'+': function () { return function (node) { for (;node = node.nextSibling;) if ((node||0).nodeType == 1) return [node] } }/**query-css3**/,
+	// CSS 3 selectors
 	'~': function () { return function (node, result) {
 		for (result = []; node = node.nextSibling; node && node.nodeType == 1 && result.push(node));
 		return result }
@@ -246,14 +267,16 @@ m.s = {
 		!((style = node.currentStyle || {}).visibility != 'hidden' || style.display != 'none'))) } },
 	visible: function () { return m.s.hidden() },
 	odd: function(odd) { return function(){ return (odd = !odd) } },
-	even: function(odd) { return function(){ return !(odd = !odd) } },
+	even: function(odd) { return function(){ return !(odd = !odd) } }/**query-extra**/,
+	// non-standard selectors
 	eq: function(idx) { idx |= 0; return function(){ return !idx-- } },
 	seq: function(seq) { seq = seq.split(','); return function(node, idx){ return idx >= seq[0] && (isNaN(seq[1]) || idx < seq[1]) } },
 	first: function() { return m.s.eq(0) },
 	last: function() { return m.s.eq(this[length]-1) },
 	gt: function(idx) { return m.s.seq(''+idx) },
-	lt: function(idx) { return m.s.seq('0,'+idx) }
+	lt: function(idx) { return m.s.seq('0,'+idx) }/**query-full**/
 }
+/**query-extra**/
 // extra selectors
 m.s[' '] = m.s['*']
 'checkbox file image password radio reset submit text'.replace(/\w+/g, function (type) {
@@ -384,13 +407,13 @@ m(window).on('load', function(){loadTime=+new Date()});
 <h1>m².js - modular micro framework</h1>
 <p>Modular microframework &copy; 2013-2014 Alex Kloss.</p>
 <ul>
-<li>2kb - 17.9kb commented/uncompressed</li>
-<li>801b - 9.8kb bytes compressed using Google Closure Compiler*</li>
-<li>492b - 4.09kb bytes compressed/gzipped using Google Closure Compiler*</li>
+<li>2kb - 19.04kb commented/uncompressed</li>
+<li>801b - 10.43kb bytes compressed using Google Closure Compiler*</li>
+<li>492b - 4.33kb bytes compressed/gzipped using Google Closure Compiler*</li>
 </ul>
-<p>WARNING: Google's Closure Compiler breaks stuff in advanced mode; also the resulting gzipped code is actually bigger in most cases.</p>
+<p>* WARNING: Google's Closure Compiler breaks stuff in advanced mode; also the resulting gzipped code is actually bigger in most cases.</p>
 <h2>Features</h2>
-<ul>
+<ul style="list-style: none">
 	<li><input type="checkbox" id="basic" value="on" disabled="disabled" style="display:none" checked/>Basic Framework: Main Object, <a href="#domevents">DOMready</a>, <a href="#iterator">Iterator</a>
 		<ul>
 			<li>Easily extendable</li>
@@ -402,9 +425,11 @@ m(window).on('load', function(){loadTime=+new Date()});
 			<li>Licensed under GPLv2</li>
 		</ul>
 	</li>
-	<li><a href="#selectors">DOM Selection:</a> <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, additional selectors)</label> <label for="query-performance"><input type="checkbox" name="query-performance" id="query-performance" value="on"> More performant (cross-browser-compatible) queries for id, name or tagname</label></li>
-	<li><label for="events"><input type="checkbox" name="events" id="events" value="on"> DOM Events</label> <a href="#domevents">[doc]</a></li>
+	<li><a href="#selectors" style="display:inline-block; float: left; height: 2.5em;">DOM Selection:</a> <label for="query-simple"><input type="radio" name="query" id="query-simple" value="simple" checked/> Simple (IE8+/querySelectorAll only)</label> <label for="query-performance"><input type="checkbox" name="query-performance" id="query-performance" value="on"> More performant (cross-browser-compatible) queries for id, name or tagname (does not require full query engine)</label><br/> <label for="query-full"><input type="radio" name="query" id="query-full" value="full"/> Full (all browsers, CSS1)</label> <label for="query-css2"><input type="checkbox" name="query-css2" id="query-css2" value="css2"/> CSS2</label> <label for="query-css3"><input type="checkbox" name="query-css3" id="query-css3" value="css2"/> CSS3</label> <label for="query-extra"><input type="checkbox" name="query-extra" id="query-extra" value="extra"/> non-standard CSS selectors</label></li>
+	<li><label for="query-html"><input type="checkbox" id="query-html" name="query-html" value="html"/> HTML queries (DOM generator)</label> <a href="#query-html">[doc]</a></li>
+	<li><a href="#domevents">DOM Events</a> <label for="no-events"><input type="radio" name="events" id="no-events" value="none"/> None</label> <label for="events-simple"><input type="radio" name="events" id="events-simple" value="simple"> DOM Events (simple)</label> <label for="events-multiple"><input type="checkbox" name="events-multiple" id="events-multiple" value="multiple"> multiple DOM Events</label> <label for="events-once"><input type="checkbox" name="events-once" id="events-once" value="once"> singular Events (run only once)</label></li>
 	<li><label for="elementready"><input type="checkbox" name="elementready" id="elementready" value="on"> ElementReady</label> <a href="#domevents">[doc]</a></li>
+	<li><a href="#insertion"> DOM insertion</a> <label for="no-ins"><input type="radio" name="ins" id="no-ins" value="none" checked/> None</label> <label for="ins"><input type="radio" name="ins" id="ins" value="simple"/> Simple</label> <label for="ins-convenience"><input type="radio" name="ins" id="ins-convenience" value="convenience"/> with convenience methods</label></li>
 	<li><label for="html"><input type="checkbox" name="html" id="html" value="on"> HTML inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
 	<li><label for="attr"><input type="checkbox" name="attr" id="attr" value="on"> DOM Attribute inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
 	<li><label for="css"><input type="checkbox" name="css" id="css" value="on"> CSS Attribute inspection/manipulation</label> <a href="#manipulation">[doc]</a></li>
@@ -474,15 +499,22 @@ m(function(){
 	m('#no-ajax').on('change', function(){
 		if (this.checked) { m('#ajax-init, #ajax-header').attr('checked', false) }
 	})
+	m('#query-css2, #query-css3, #query-extra').on('change', function(){
+		if (m('#query-css2:checked, #query-css3:checked, #query-extra:checked').length &&
+			m('#query-full:checked').length == 0) {
+			m('#query-full').attr('checked', true)
+		}
+	})
+	m('#query-simple').on('change', function(){
+		if (this.checked) { m('#query-css2, #query-css3, #query-extra').attr('checked', false) }
+	})
 });
 //m(function(){console.log('iterator ready')}, '#iterator');
 </script>
 <h2>TODO</h2>
 <ul>
 	<li>More/Improved Documentation</li>
-	<li>More modular control over selectors (maybe even additional selectors)</li>
 	<li>Test Suite for pos, sel?</li>
-	<li>Multiple events in one call, one-time-events</li>
 	<li>Additional functionality (as modules)
 		<ul>
 			<li>serialize (as optional part of (.val)?)</li>
@@ -505,18 +537,19 @@ m(function(){
 #functionality { margin: 0; padding: 0; }
 #functionality li { font-size: 13px; }
 #functionality label { background: #FFFFFF; border: 1px solid #DDDDDD; cursor: pointer; }
-#selectors, #domevents, #manipulation, #iterator, #networking, #client { display: block; margin: 0; padding: 0 1em 1em; overflow: hidden;  }
-#selectors { background: #FFFFCC; }
+#selectors, #domevents, #manipulation, #insertion, #iterator, #networking, #client { display: block; margin: 0; padding: 0 1em 1em; overflow: hidden; border-bottom: 4px solid #FFFFFF; }
+#selectors { background: #FFBBBB; }
 #selectors > ul > li { float: left; }
 #pseudoattributes { width: 40em; }
 #pseudoattributes li { float: left; width: 12em; }
-#domevents { background: #FFEEDD; }
-#manipulation { background: #FFEEEE; }
+#domevents { background: #FFDDBB; }
+#insertion { background: #FFFFBB;}
+#manipulation { background: #DDFFBB; }
 #manipulation > ul > li { float: left; margin-right: 3em; }
-#iterator { background: #DDEEFF; }
-#networking { background: #DDFFEE; }
+#iterator { background: #BBDDDD; }
+#networking { background: #BBDDFF; }
 #networking > ul > li { float: left; margin-right: 3em; }
-#client { background: #EEEEEE; }
+#client { background: #DDDDFF; }
 </style>
 <ul id="functionality">
 	<li id="selectors">
@@ -602,6 +635,15 @@ m(function(){
 			<li>m(s).trigger(t) - Trigger Event Chain</li>
 		</ul>
 		<p>* requires <label for="events">DOM Events</label></p>
+	</li>
+	<li id="insertion">
+		<h3>m(s).ins, m(s).before, m(s).after - Insertion*</h3>
+		<ul>
+			<li>m(s).ins(referenceNode, after) - insert Node Collection before/after referenceNode</li>
+			<li>m(s).before(referenceNode) - convenience call</li>
+			<li>m(s).after(referenceNode) - convenience call</li>
+		</ul>
+		<p>* requires <label for="ins">DOM Insertion</label> or <label for="ins-convenience">Convenience Calls for DOM Insertion</label></p>
 	</li>
 	<li id="manipulation">
 		<h3>m(s).attr|css|html|cls|val - Manipulation/Inspection</h3>
