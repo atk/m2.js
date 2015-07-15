@@ -1,7 +1,7 @@
 m².js
 =====
 
-m².js - modular micro framework (c) 2013 by Alex Kloss
+m².js - modular micro framework (c) 2013-2015 by Alex Lohr
 
 * 2kb - 17.76kb commented/uncompressed
 * 817b - 9.67kb bytes compressed using Google Closure Compiler
