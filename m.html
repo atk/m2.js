@@ -151,13 +151,13 @@ m[proto] = {
 	// has/add/remove/toggle class names (convenience functions below)
 	cls: function (action, name, has, search) {
 		action = action == 'has' ? 0 : action
-		search = eval('/\\b' + name + '\\s+/g')
+		search = eval('/\\b' + name + '\\b/g')
 		this.each(function (node, className, without, within) {
 			search.lastIndex = 0
 			without = node[className = 'className'].replace(search, '')
 			within = without != node[className]
 			has = has || within
-			action && (node[className] = without + ({ add: 1, toggle: !within }[action] ? ' ' + name : ''))
+			action && (node[className] = (without + ({ add: 1, toggle: !within }[action] ? ' ' + name : '')).replace(/  +/g, ' '))
 		})
 		return action ? this : has
 	}/**value**/,
