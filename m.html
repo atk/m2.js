@@ -318,7 +318,7 @@ m.ajax = function (conf, xhr) {
 m.jsonp = function (conf, head, scripttag) {
 	head = doc.getElementsByTagName('head')[0],
 	scripttag = doc.createElement(script),
-	conf.callback && (window[conf._ = conf._ || script + (+new Date())] = function(){
+	conf.callback && (window[conf._ = conf._ || script + (+new Date()+Math.floor((Math.random() * 10000) + 1))] = function(){
 		head.removeChild(scripttag);
 		conf.callback.apply(this, arguments);
 		window[conf._] = undef
